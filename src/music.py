@@ -25,6 +25,11 @@ class WebBase(tornado.web.RequestHandler):
                 self.params = {}
 
 
+class Lyric(WebBase):
+    def get(self, *args, **kwargs):
+        pass
+
+
 if __name__ == '__main__':
     if len(sys.argv) < 3:
         print("%s port /path/to/config_file" % (sys.argv[0]))
