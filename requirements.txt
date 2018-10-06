@@ -1,3 +1,4 @@
 tornado
 toml
+redis
 cloudmusic
