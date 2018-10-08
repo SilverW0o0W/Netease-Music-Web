@@ -15,6 +15,8 @@ import tornado.httpserver
 import tornado.template
 from tornado.log import access_log
 
+from lyric_exporter import Exporter
+
 
 class WebBase(tornado.web.RequestHandler):
     def prepare(self):
@@ -25,9 +27,17 @@ class WebBase(tornado.web.RequestHandler):
                 self.params = {}
 
 
-class Lyric(WebBase):
-    def get(self, *args, **kwargs):
-        pass
+class LyricExporter(WebBase):
+    def post(self, *args, **kwargs):
+        song_id = self.params.get('song_id', '')
+        if not song_id:
+            resp = {
+                "status": 400,
+                "msg": "请输入song id"
+            }
+            self.write(json.dumps(resp))
+            return
+        exporter = Exporter()
 
 
 if __name__ == '__main__':
@@ -42,7 +52,7 @@ if __name__ == '__main__':
 
     app = tornado.web.Application(
         [
-            (r"/", MainHandler),
+            (r"/exporter", LyricExporter),
             (r"/views/(.*)", tornado.web.StaticFileHandler, {"path": os.path.join(os.path.dirname(__file__), "views")}),
         ],
         debug=True,
