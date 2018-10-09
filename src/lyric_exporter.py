@@ -67,7 +67,8 @@ class Exporter(object):
             lyric_data = json.load(f)
         return lyric_data
 
-    def export_lyric(self, song_id, lrc_type):
+    def export_lyric(self, song_id, lrc_type=None):
+        lrc_type = ORIGIN if lrc_type is None else lrc_type
         key = 'lyric:song:{0}:{1}'.format(song_id, lrc_type)
         status, msg, lrc_path = self.get_cache_file(song_id, lrc_type)
         if status and os.path.isfile(lrc_path):

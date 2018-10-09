@@ -30,6 +30,7 @@ class WebBase(tornado.web.RequestHandler):
 class LyricExporter(WebBase):
     def post(self, *args, **kwargs):
         song_id = self.params.get('song_id', '')
+        lrc_type = self.params.get('lrc_type', None)
         if not song_id:
             resp = {
                 "status": 400,
@@ -38,6 +39,7 @@ class LyricExporter(WebBase):
             self.write(json.dumps(resp))
             return
         exporter = Exporter()
+        status, msg, path = exporter.export_lyric(song_id, lrc_type)
 
 
 if __name__ == '__main__':
