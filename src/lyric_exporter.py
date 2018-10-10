@@ -78,11 +78,11 @@ class Exporter(object):
         if lrc_type == ORIGIN:
             lrc_text = lrc_data.get("lyric", "")
         elif lrc_type == TRANS:
-            lrc_text = lrc_data.get("t_lyric", "")
+            lrc_text = lrc_data.get("trans_lyric", "")
             lrc_text = lrc_text if lrc_text else lrc_data.get("lyric", "")
         elif lrc_type == MERGE:
             lrc_text1 = lrc_data.get("lyric", "")
-            lrc_text2 = lrc_data.get("t_lyric", "")
+            lrc_text2 = lrc_data.get("trans_lyric", "")
             lrc_text = lrc_text1 + lrc_text2
         if not lrc_text:
             return False, "lrc not found", ""
