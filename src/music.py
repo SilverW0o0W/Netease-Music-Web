@@ -20,10 +20,11 @@ from lyric_exporter import Exporter
 
 class WebBase(tornado.web.RequestHandler):
     def prepare(self):
+        self.params = {}
         if self.request.body:
             try:
                 self.params = json.loads(self.request.body)
-            except:
+            except Exception:
                 self.params = {}
 
 
