@@ -1,10 +1,37 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
+    <title>权限验证失败</title>
     <meta charset="UTF-8">
-    <title>Title</title>
+    {% include "./import_css.html" %}
+
 </head>
 <body>
+<div id="app">
+    <el-container>
+        {% include "./aside.html" %}
+        <el-container>
+            <el-main>
+                <h1>集市业务后台</h1>
+            </el-main>
+        </el-container>
+    </el-container>
+</div>
 
+{% include "./import_js.html"%}
+<script>
+
+    var Main = {
+        data() {
+            return {
+            };
+        },
+        methods: {
+        }
+    };
+    var Prods = Vue.extend(Main)
+    new Prods().$mount('#app')
+
+</script>
 </body>
 </html>

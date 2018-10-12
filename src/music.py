@@ -46,6 +46,20 @@ class SongLyric(WebBase):
         self.write(json.dumps(resp))
 
 
+class LyricDownload(WebBase):
+    def get(self, *args, **kwargs):
+        file_path = self.get_argument('path')
+        self.set_header('Content-Type', 'application/octet-stream')
+        self.set_header('Content-Disposition', 'attachment; filename=%s' % file_path)
+        with open(file_path, 'rb') as f:
+            while True:
+                data = f.read(1024)
+                if not data:
+                    break
+                self.write(data)
+        self.finish()
+
+
 if __name__ == '__main__':
     if len(sys.argv) < 3:
         print("%s port /path/to/config_file" % (sys.argv[0]))
@@ -60,6 +74,7 @@ if __name__ == '__main__':
     app = tornado.web.Application(
         [
             (r"/lyric/song", SongLyric),
+            (r"/lyric/song/download", LyricDownload),
             (r"/views/(.*)", tornado.web.StaticFileHandler, {"path": os.path.join(os.path.dirname(__file__), "views")}),
         ],
         debug=True,
