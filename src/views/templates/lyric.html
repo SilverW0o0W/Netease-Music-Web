@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <title>歌词导出</title>
+    <meta charset="UTF-8">
+    {% include "./import_css.html" %}
+</head>
+<body>
+<div id="app">
+    <el-container>
+        <el-main>
+            <el-form ref="form" :model="form" label-width="120px">
+                <el-form-item label="歌曲ID">
+                    <el-input v-model="form.id" placeholder=""></el-input>
+                </el-form-item>
+                <el-form-item label="命名格式">
+                    <el-radio v-model="form.format" label="1">歌曲名</el-radio>
+                    <el-radio v-model="form.format" label="2">歌手 - 歌曲名</el-radio>
+                    <el-radio v-model="form.format" label="3">歌曲名 - 歌手</el-radio>
+                </el-form-item>
+                <el-form-item label="语言版本">
+                    <el-radio v-model="form.type" label="1">原歌词</el-radio>
+                    <el-radio v-model="form.type" label="2">翻译歌词</el-radio>
+                    <el-radio v-model="form.type" label="3">混合歌词</el-radio>
+                </el-form-item>
+                <el-form-item>
+                    <el-button type="primary" @click="download()">Download</el-button>
+                </el-form-item>
+            </el-form>
+        </el-main>
+    </el-container>
+</div>
+
+{% include "./import_js.html"%}
+<script>
+    var Main = {
+        data() {
+            return {
+                form: {
+                    id: "",
+                    format: 1,
+                    type: 1,
+                    }
+            }
+        },
+        methods: {
+            download() {
+                let that = this;
+                axios.post('/lyric/song', this.form)
+                .then(function (response) {
+                    if (response.data.status == 0) {
+                        that.form.link = response.data.url;
+                    } else {
+                        that.$message.error(response.data.msg);
+                    }
+                })
+                .catch(function (error) {
+                    console.log(error);
+                });
+            },
+        }
+    };
+    var Prods = Vue.extend(Main)
+    new Prods().$mount('#app')
+
+
+
+
+</script>
+</body>
+</html>
