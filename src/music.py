@@ -25,10 +25,20 @@ class WebBase(tornado.web.RequestHandler):
     pass
 
 
+class MainHandler(WebBase):
+    def get(self):
+        self.render("views/templates/main.html")
+
+
+class LyricHandler(WebBase):
+    def get(self):
+        self.render("views/templates/lyric.html")
+
+
 class SongLyric(WebBase):
     def post(self, *args, **kwargs):
         song_id = self.get_argument('id', default='')
-        lrc_type = self.get_argument('lrc_type', default=None)
+        lrc_type = self.get_argument('type', default=None)
         if not song_id:
             resp = {
                 "status": -1,
@@ -73,8 +83,11 @@ if __name__ == '__main__':
 
     app = tornado.web.Application(
         [
+            (r"/lyric", LyricHandler),
             (r"/lyric/song", SongLyric),
             (r"/lyric/song/download", LyricDownload),
+
+            (r"/", MainHandler),
             (r"/views/(.*)", tornado.web.StaticFileHandler, {"path": os.path.join(os.path.dirname(__file__), "views")}),
         ],
         debug=True,
