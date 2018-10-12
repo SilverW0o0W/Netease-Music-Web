@@ -11,7 +11,7 @@ TRANS = 1
 MERGE = 2
 
 
-class Exporter(object):
+class Lyric(object):
 
     def __init__(self, lyric_cache):
         self.lyric_cache = lyric_cache
@@ -22,7 +22,7 @@ class Exporter(object):
             value = self.lyric_cache.get(key)
         except Exception as e:
             return False, str(e), None
-        return True, "", value
+        return True, "", str(value)
 
     def get_cache_file(self, song_id, lrc_type):
         key = 'lyric:song:{0}:{1}'.format(song_id, lrc_type)
@@ -30,7 +30,7 @@ class Exporter(object):
             value = self.lyric_cache.get(key)
         except Exception as e:
             return False, str(e), None
-        return True, "", value
+        return True, "", str(value)
 
     def download(self, song_id):
         lyric_data = request_lyric(song_id)
@@ -40,26 +40,25 @@ class Exporter(object):
         key = 'lyric:song:{}'.format(song_id)
         json_path = "{}.json".format(song_id)
         with open(json_path, "w") as f:
-            f.write(json.dump(data))
+            json.dump(data, f)
         self.lyric_cache.set(key, json_path)
         return True, json_path, data
 
     @staticmethod
     def adapt_lyric(lyric_data):
         lyric = {}
-        _lrc = lyric_data.get('lyric', '')
-        _t_lrc = lyric_data.get('tlyric', '')
-        if not _lrc and not _t_lrc:
-            return False, None
-        if _lrc:
-            lyric['lyric'] = _lrc
-        if _t_lrc:
-            lyric['trans_lyric'] = _lrc
-        return True, lyric
+        lrcs = {('lrc', 'lyric'), ('tlyric', 'trans_lyric')}
+        either_exist = False
+        for s_key, d_key in lrcs:
+            tmp_lrc = lyric_data.get(s_key, {})
+            if tmp_lrc:
+                either_exist = True
+                lyric[d_key] = tmp_lrc.get('lyric', '')
+        return either_exist, lyric
 
     def export(self, song_id):
         status, msg, path = self.get_cache_path(song_id)
-        if not (status and os.path.isfile(path)):
+        if not (path and os.path.isfile(path)):
             status, path, lyric_data = self.download(song_id)
         if not status:
             return None
@@ -67,11 +66,11 @@ class Exporter(object):
             lyric_data = json.load(f)
         return lyric_data
 
-    def export_lyric(self, song_id, lrc_type=None):
+    def export_song(self, song_id, lrc_type=None):
         lrc_type = ORIGIN if lrc_type is None else lrc_type
         key = 'lyric:song:{0}:{1}'.format(song_id, lrc_type)
         status, msg, lrc_path = self.get_cache_file(song_id, lrc_type)
-        if status and os.path.isfile(lrc_path):
+        if lrc_path and os.path.isfile(lrc_path):
             return True, "", lrc_path
         lrc_data = self.export(song_id)
         lrc_text = ""

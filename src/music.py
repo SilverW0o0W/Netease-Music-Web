@@ -15,32 +15,35 @@ import tornado.httpserver
 import tornado.template
 from tornado.log import access_log
 
-from lyric_exporter import Exporter
+import redis
+from lyric import Lyric
+
+LYRIC_CACHE = None
 
 
 class WebBase(tornado.web.RequestHandler):
-    def prepare(self):
-        self.params = {}
-        if self.request.body:
-            try:
-                self.params = json.loads(self.request.body)
-            except Exception:
-                self.params = {}
+    pass
 
 
-class LyricExporter(WebBase):
+class SongLyric(WebBase):
     def post(self, *args, **kwargs):
-        song_id = self.params.get('song_id', '')
-        lrc_type = self.params.get('lrc_type', None)
+        song_id = self.get_argument('id', default='')
+        lrc_type = self.get_argument('lrc_type', default=None)
         if not song_id:
             resp = {
-                "status": 400,
+                "status": -1,
                 "msg": "请输入song id"
             }
             self.write(json.dumps(resp))
             return
-        exporter = Exporter()
-        status, msg, path = exporter.export_lyric(song_id, lrc_type)
+        lyric = Lyric(LYRIC_CACHE)
+        status, msg, path = lyric.export_song(song_id, lrc_type=lrc_type)
+        resp = {
+            "status": status,
+            "msg": msg,
+            "path": path,
+        }
+        self.write(json.dumps(resp))
 
 
 if __name__ == '__main__':
@@ -52,10 +55,11 @@ if __name__ == '__main__':
         exit(1)
     with open(sys.argv[2], "r") as f:
         Config = toml.load(f)
+    LYRIC_CACHE = redis.StrictRedis(**Config["LYRIC_CACHE"])
 
     app = tornado.web.Application(
         [
-            (r"/exporter", LyricExporter),
+            (r"/lyric/song", SongLyric),
             (r"/views/(.*)", tornado.web.StaticFileHandler, {"path": os.path.join(os.path.dirname(__file__), "views")}),
         ],
         debug=True,
