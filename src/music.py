@@ -36,9 +36,22 @@ class LyricHandler(WebBase):
 
 
 class SongLyric(WebBase):
+    def get(self, *args, **kwargs):
+        file_path = self.get_argument('path')
+        self.set_header('Content-Type', 'application/octet-stream')
+        self.set_header('Content-Disposition', 'attachment; filename=%s' % file_path)
+        with open(file_path, 'rb') as f:
+            while True:
+                data = f.read(1024)
+                if not data:
+                    break
+                self.write(data)
+        self.finish()
+
     def post(self, *args, **kwargs):
-        song_id = self.get_argument('id', default='')
-        lrc_type = self.get_argument('type', default=None)
+        params = json.loads(self.request.body)
+        song_id = params.get('id', default='')
+        lrc_type = params.get('type', default=None)
         if not song_id:
             resp = {
                 "status": -1,
@@ -56,20 +69,6 @@ class SongLyric(WebBase):
         self.write(json.dumps(resp))
 
 
-class LyricDownload(WebBase):
-    def get(self, *args, **kwargs):
-        file_path = self.get_argument('path')
-        self.set_header('Content-Type', 'application/octet-stream')
-        self.set_header('Content-Disposition', 'attachment; filename=%s' % file_path)
-        with open(file_path, 'rb') as f:
-            while True:
-                data = f.read(1024)
-                if not data:
-                    break
-                self.write(data)
-        self.finish()
-
-
 if __name__ == '__main__':
     if len(sys.argv) < 3:
         print("%s port /path/to/config_file" % (sys.argv[0]))
@@ -85,7 +84,6 @@ if __name__ == '__main__':
         [
             (r"/lyric", LyricHandler),
             (r"/lyric/song", SongLyric),
-            (r"/lyric/song/download", LyricDownload),
 
             (r"/", MainHandler),
             (r"/views/(.*)", tornado.web.StaticFileHandler, {"path": os.path.join(os.path.dirname(__file__), "views")}),
