@@ -1,3 +1,6 @@
+DOWNLOAD_DIR = "/data/lyric/download"
+CACHE_DIR = "/data/lyric/cache"
+
 [LYRIC_CACHE]
 host = "localhost"
 port = 6379

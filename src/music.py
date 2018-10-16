@@ -16,13 +16,19 @@ import tornado.template
 from tornado.log import access_log
 
 import redis
-from lyric import Lyric
+from lyric import Exporter
 
-LYRIC_CACHE = None
+Export = None
 
 
 class WebBase(tornado.web.RequestHandler):
-    pass
+    def prepare(self):
+        self.body_params = {}
+        if self.request.body:
+            try:
+                self.body_params = json.loads(self.request.body)
+            except:
+                self.body_params = {}
 
 
 class MainHandler(WebBase):
@@ -37,7 +43,7 @@ class LyricHandler(WebBase):
 
 class SongLyric(WebBase):
     def get(self, *args, **kwargs):
-        file_path = self.get_argument('path')
+        file_path = self.body_params.get('path', "")
         self.set_header('Content-Type', 'application/octet-stream')
         self.set_header('Content-Disposition', 'attachment; filename=%s' % file_path)
         with open(file_path, 'rb') as f:
@@ -49,9 +55,7 @@ class SongLyric(WebBase):
         self.finish()
 
     def post(self, *args, **kwargs):
-        params = json.loads(self.request.body)
-        song_id = params.get('id', default='')
-        lrc_type = params.get('type', default=None)
+        song_id = self.body_params.get('id', '')
         if not song_id:
             resp = {
                 "status": -1,
@@ -59,14 +63,20 @@ class SongLyric(WebBase):
             }
             self.write(json.dumps(resp))
             return
-        lyric = Lyric(LYRIC_CACHE)
-        status, msg, path = lyric.export_song(song_id, lrc_type=lrc_type)
+        lrc_type = int(self.body_params.get('type', 0))
+        status, msg, path = Export.export_song(song_id, lrc_type=lrc_type)
         resp = {
             "status": status,
             "msg": msg,
             "path": path,
         }
         self.write(json.dumps(resp))
+
+
+def create_path(paths):
+    for path in paths:
+        if not os.path.isdir(path):
+            os.makedirs(path)
 
 
 if __name__ == '__main__':
@@ -78,7 +88,9 @@ if __name__ == '__main__':
         exit(1)
     with open(sys.argv[2], "r") as f:
         Config = toml.load(f)
-    LYRIC_CACHE = redis.StrictRedis(**Config["LYRIC_CACHE"])
+    lyric_cache = redis.StrictRedis(**Config["LYRIC_CACHE"])
+    Export = Exporter(lyric_cache, Config["DOWNLOAD_DIR"], Config["CACHE_DIR"])
+    create_path([Config["DOWNLOAD_DIR"], Config["CACHE_DIR"]])
 
     app = tornado.web.Application(
         [

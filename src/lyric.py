@@ -11,10 +11,12 @@ TRANS = 1
 MERGE = 2
 
 
-class Lyric(object):
+class Exporter(object):
 
-    def __init__(self, lyric_cache):
+    def __init__(self, lyric_cache, download_dir, cache_dir):
         self.lyric_cache = lyric_cache
+        self.download_dir = download_dir
+        self.cache_dir = cache_dir
 
     def get_cache_path(self, song_id):
         key = 'lyric:song:{}'.format(song_id)
@@ -39,7 +41,8 @@ class Lyric(object):
             return False, '', None
         key = 'lyric:song:{}'.format(song_id)
         json_path = "{}.json".format(song_id)
-        with open(json_path, "w") as f:
+        download_path = os.path.join(self.download_dir, json_path)
+        with open(download_path, "w") as f:
             json.dump(data, f)
         self.lyric_cache.set(key, json_path)
         return True, json_path, data
@@ -58,19 +61,20 @@ class Lyric(object):
 
     def export(self, song_id):
         status, msg, path = self.get_cache_path(song_id)
-        if not (path and os.path.isfile(path)):
+        if path and os.path.isfile(path):
+            json_path = os.path.join(self.download_dir, path)
+            with open(json_path, "r") as f:
+                lyric_data = json.load(f)
+        else:
             status, path, lyric_data = self.download(song_id)
-        if not status:
-            return None
-        with open(path, "r") as f:
-            lyric_data = json.load(f)
         return lyric_data
 
     def export_song(self, song_id, lrc_type=None):
         lrc_type = ORIGIN if lrc_type is None else lrc_type
         key = 'lyric:song:{0}:{1}'.format(song_id, lrc_type)
         status, msg, lrc_path = self.get_cache_file(song_id, lrc_type)
-        if lrc_path and os.path.isfile(lrc_path):
+        cache_path = self.cache_dir + lrc_path
+        if cache_path and os.path.isfile(cache_path):
             return True, "", lrc_path
         lrc_data = self.export(song_id)
         lrc_text = ""
@@ -86,7 +90,8 @@ class Lyric(object):
         if not lrc_text:
             return False, "lrc not found", ""
         lrc_path = "{0}_{1}.lrc".format(song_id, lrc_type)
-        with open(lrc_path, "w") as f:
+        cache_path = os.path.join(self.cache_dir, lrc_path)
+        with open(cache_path, "w") as f:
             f.write(lrc_text)
         self.lyric_cache.set(key, lrc_path)
         return True, "", lrc_path
