@@ -68,6 +68,7 @@ class SongLyric(WebBase):
         resp = {
             "status": status,
             "msg": msg,
+            "name": "",
             "path": path,
         }
         self.write(json.dumps(resp))
