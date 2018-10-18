@@ -95,3 +95,6 @@ class Exporter(object):
             f.write(lrc_text)
         self.lyric_cache.set(key, lrc_path)
         return True, "", lrc_path
+
+    def convert_cache_path(self, path):
+        return os.path.join(self.cache_dir, path)

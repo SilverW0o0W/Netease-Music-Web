@@ -43,10 +43,11 @@ class LyricHandler(WebBase):
 
 class SongLyric(WebBase):
     def get(self, *args, **kwargs):
-        file_path = self.body_params.get('path', "")
+        file_path = self.get_argument('uri', "")
         self.set_header('Content-Type', 'application/octet-stream')
         self.set_header('Content-Disposition', 'attachment; filename=%s' % file_path)
-        with open(file_path, 'rb') as f:
+        path = Export.convert_cache_path(file_path)
+        with open(path, 'rb') as f:
             while True:
                 data = f.read(1024)
                 if not data:
@@ -66,10 +67,15 @@ class SongLyric(WebBase):
         lrc_type = int(self.body_params.get('type', 0))
         status, msg, path = Export.export_song(song_id, lrc_type=lrc_type)
         resp = {
-            "status": status,
+            "status": 0,
             "msg": msg,
-            "name": "",
-            "path": path,
+            "data": [
+                {
+                    "name": song_id,
+                    "status": "有效" if status else "无效",
+                    "uri": "/lyric/song?uri={}".format(path),
+                },
+            ]
         }
         self.write(json.dumps(resp))
 
