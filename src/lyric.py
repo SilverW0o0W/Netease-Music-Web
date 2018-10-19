@@ -73,8 +73,7 @@ class Exporter(object):
         lrc_type = ORIGIN if lrc_type is None else lrc_type
         key = 'lyric:song:{0}:{1}'.format(song_id, lrc_type)
         status, msg, lrc_path = self.get_cache_file(song_id, lrc_type)
-        cache_path = self.cache_dir + lrc_path
-        if cache_path and os.path.isfile(cache_path):
+        if lrc_path and os.path.isfile(os.path.join(self.cache_dir, lrc_path)):
             return True, "", lrc_path
         lrc_data = self.export(song_id)
         lrc_text = ""
