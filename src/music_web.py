@@ -14,6 +14,7 @@ import tornado.httpserver
 import tornado.template
 
 import redis
+from utils import get_real_id
 from lyric import Exporter
 
 Export = None
@@ -60,6 +61,15 @@ class SongLyric(WebBase):
             resp = {
                 "status": -1,
                 "msg": "请输入链接"
+            }
+            self.write(json.dumps(resp))
+            return
+
+        real_id, real_type = get_real_id(url, url_type)
+        if not real_id or not real_type:
+            resp = {
+                "status": -1,
+                "msg": "请输入合法链接"
             }
             self.write(json.dumps(resp))
             return
