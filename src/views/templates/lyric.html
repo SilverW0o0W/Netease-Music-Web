@@ -11,7 +11,14 @@
         <el-main>
             <el-form ref="form" :model="form" label-width="120px">
                 <el-form-item label="歌曲ID">
-                    <el-input v-model="form.id" placeholder=""></el-input>
+                    <el-input placeholder="请输入内容" v-model="form.url">
+                        <el-select v-model="form.url_type" slot="prepend">
+                            <el-option label="歌曲链接" value="0"></el-option>
+                            <el-option label="歌单链接" value="1"></el-option>
+                            <el-option label="歌曲ID" value="2"></el-option>
+                            <el-option label="歌单ID" value="3"></el-option>
+                        </el-select>
+                    </el-input>
                 </el-form-item>
                 <el-form-item label="命名格式">
                     <el-radio v-model="form.format" label="0">歌曲名</el-radio>
@@ -46,12 +53,18 @@
 </div>
 
 {% include "./import_js.html"%}
+<style>
+  .el-select .el-input {
+    width: 130px;
+  }
+</style>
 <script>
     var Main = {
         data() {
             return {
                 form: {
-                    id: "",
+                    url: "",
+                    url_type: "0",
                     format: "0",
                     type: "0",
                     },

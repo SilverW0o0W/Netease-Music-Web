@@ -54,14 +54,16 @@ class SongLyric(WebBase):
         self.finish()
 
     def post(self, *args, **kwargs):
-        song_id = self.body_params.get('id', '')
-        if not song_id:
+        url_type = self.body_params.get('url_type', '0')
+        url = self.body_params.get('url', '0')
+        if not url:
             resp = {
                 "status": -1,
-                "msg": "请输入song id"
+                "msg": "请输入链接"
             }
             self.write(json.dumps(resp))
             return
+
         lrc_type = int(self.body_params.get('type', 0))
         status, msg, path = Export.export_song(song_id, lrc_type=lrc_type)
         resp = {
