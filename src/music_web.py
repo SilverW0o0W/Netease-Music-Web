@@ -8,12 +8,10 @@ import json
 
 import toml
 
-import tornado
 import tornado.ioloop
 import tornado.web
 import tornado.httpserver
 import tornado.template
-from tornado.log import access_log
 
 import redis
 from lyric import Exporter
