@@ -75,13 +75,16 @@ class SongLyric(WebBase):
             return
 
         lrc_type = int(self.body_params.get('type', 0))
-        status, msg, path = Export.export_song(song_id, lrc_type=lrc_type)
+        if real_type == 0:
+            status, msg, path = Export.export_song(real_id, lrc_type=lrc_type)
+        elif real_type == 1:
+            pass
         resp = {
             "status": 0,
             "msg": msg,
             "data": [
                 {
-                    "name": song_id,
+                    "name": real_id,
                     "status": "有效" if status else "无效",
                     "uri": "/lyric/song?uri={}".format(path),
                 },
