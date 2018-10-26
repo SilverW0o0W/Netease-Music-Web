@@ -38,7 +38,7 @@
             </el-form>
             <el-dialog title="歌曲信息" :visible.sync="dialogTableVisible">
                 <el-table :data="gridData">
-                    <el-table-column label="歌曲名" prop="name" width="150"></el-table-column>
+                    <el-table-column label="歌曲名" prop="name" width="300" show-overflow-tooltip="true"></el-table-column>
                     <el-table-column label="状态" prop="status" width="150"></el-table-column>
                     <el-table-column label="操作" prop="uri">
                         <template slot-scope="scope">
