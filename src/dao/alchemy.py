@@ -1,8 +1,18 @@
-# coding=utf-8
-from sqlalchemy import Column, String, Integer
+#!/usr/bin/env python3.6
+# -*- encoding: utf-8 -*-
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine, Column, String, Integer
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
+
+
+class Database(object):
+    def __init__(self, connect_string):
+        self.engine = create_engine(connect_string)
+
+    def connect(self):
+        return sessionmaker(bind=self.engine)
 
 
 class Song(Base):
