@@ -17,6 +17,7 @@ import redis
 from utils import get_real_id
 from song import Song
 from lyric import Exporter
+from dao.alchemy import DBWorker
 
 Reader = None
 Export = None
@@ -45,8 +46,9 @@ class LyricHandler(WebBase):
 class SongLyric(WebBase):
     def get(self, *args, **kwargs):
         file_path = self.get_argument('uri', "")
+        name = self.get_argument('name', "")
         self.set_header('Content-Type', 'application/octet-stream')
-        self.set_header('Content-Disposition', 'attachment; filename=%s' % file_path)
+        self.set_header('Content-Disposition', 'attachment; filename=%s' % name + '.lrc')
         path = Export.convert_cache_path(file_path)
         with open(path, 'rb') as f:
             while True:
@@ -78,6 +80,8 @@ class SongLyric(WebBase):
             return
 
         lrc_type = int(self.body_params.get('type', 0))
+        status, msg, path = '', '', ''
+        name = ''
         if real_type == 0:
             status, msg, path = Export.export_song(real_id, lrc_type=lrc_type)
             name = Reader.get_file_name(real_id, name_format=name_format)
@@ -90,7 +94,7 @@ class SongLyric(WebBase):
                 {
                     "name": name,
                     "status": "有效" if status else "无效",
-                    "uri": "/lyric/song?uri={}".format(path),
+                    "uri": "/lyric/song?uri={}&name={}".format(path, name),
                 },
             ]
         }
@@ -113,7 +117,8 @@ if __name__ == '__main__':
     with open(sys.argv[2], "r") as f:
         Config = toml.load(f)
     lyric_cache = redis.StrictRedis(**Config["LYRIC_CACHE"])
-    Reader = Song()
+    song_db = DBWorker(Config["CONNECT_STRING"])
+    Reader = Song(song_db)
     Export = Exporter(lyric_cache, Config["DOWNLOAD_DIR"], Config["CACHE_DIR"])
     create_path([Config["DOWNLOAD_DIR"], Config["CACHE_DIR"]])
 

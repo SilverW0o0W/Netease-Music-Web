@@ -4,7 +4,7 @@
 import os
 import json
 import time
-import alchemy
+import dao.alchemy as alchemy
 
 from cloudmusic.spider.api import request_song
 from cloudmusic.spider.adapter import adapt_song
@@ -17,25 +17,39 @@ class Song(object):
         '2': '{name} - {artists}',
     }
 
-    def __init__(self):
-        pass
+    def __init__(self, song_db):
+        self.song_db = song_db
+
+    def get_song(self, song_id):
+        db_song = self.song_db.query_song(song_id)
+        if db_song:
+            name = db_song.name
+            artists = db_song.artists
+        else:
+            content = request_song(song_id)
+            song = adapt_song(content, song_id)
+            now = int(time.time())
+            name = song.name
+            artists_list = [artist.name for artist in song.artists]
+            artists = ','.join(artists_list)
+            db_song = alchemy.Song(
+                origin_id=song_id,
+                name=song.name,
+                artists=artists,
+                created_time=now,
+                updated_time=now
+            )
+            self.song_db.merge_song(db_song)
+        return {
+            'id': song_id,
+            'name': name,
+            'artists': artists,
+        }
 
     def get_file_name(self, song_id, name_format='0'):
-        content = request_song(song_id)
-        song = adapt_song(content, song_id)
-
-        artists_list = [artist.name for artist in song.artists]
-        artists = ','.join(artists_list)
+        song = self.get_song(song_id)
+        if not song:
+            return song_id
         return self.name_format_map.get(name_format, '').format(
-            name=song.name, artists=artists
+            name=song.get('name', ''), artists=song.get('artists', '')
         )
-
-        # now = int(time.time())
-        # db_song = alchemy.Song(
-        #     origin_id=song_id,
-        #     name=song.name,
-        #     artists=artists_name,
-        #     created_time=now,
-        #     updated_time=now
-        # )
-        # db_song.merge()
