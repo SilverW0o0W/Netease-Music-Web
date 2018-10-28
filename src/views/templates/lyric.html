@@ -11,7 +11,16 @@
         <el-main>
             <el-form ref="form" :model="form" label-width="120px">
                 <el-form-item label="歌曲ID">
-                    <el-input v-model="form.id" placeholder=""></el-input>
+                    <el-input placeholder="请输入内容" v-model="form.url">
+                        <el-select v-model="form.url_type" slot="prepend">
+                            <el-option label="歌曲链接" value="0"></el-option>
+                            <el-option label="歌单链接" value="1"></el-option>
+                            <el-option label="专辑链接" value="2"></el-option>
+                            <el-option label="歌曲ID" value="3"></el-option>
+                            <el-option label="歌单ID" value="4"></el-option>
+                            <el-option label="专辑ID" value="5"></el-option>
+                        </el-select>
+                    </el-input>
                 </el-form-item>
                 <el-form-item label="命名格式">
                     <el-radio v-model="form.format" label="0">歌曲名</el-radio>
@@ -29,7 +38,7 @@
             </el-form>
             <el-dialog title="歌曲信息" :visible.sync="dialogTableVisible">
                 <el-table :data="gridData">
-                    <el-table-column label="歌曲名" prop="name" width="150"></el-table-column>
+                    <el-table-column label="歌曲名" prop="name" width="300" show-overflow-tooltip="true"></el-table-column>
                     <el-table-column label="状态" prop="status" width="150"></el-table-column>
                     <el-table-column label="操作" prop="uri">
                         <template slot-scope="scope">
@@ -46,12 +55,18 @@
 </div>
 
 {% include "./import_js.html"%}
+<style>
+  .el-select .el-input {
+    width: 130px;
+  }
+</style>
 <script>
     var Main = {
         data() {
             return {
                 form: {
-                    id: "",
+                    url: "",
+                    url_type: "0",
                     format: "0",
                     type: "0",
                     },
