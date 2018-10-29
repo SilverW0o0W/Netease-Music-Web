@@ -1,5 +1,6 @@
 DOWNLOAD_DIR = "/data/lyric/download"
 CACHE_DIR = "/data/lyric/cache"
+CONNECT_STRING = "sqlite:///music.db"
 
 [LYRIC_CACHE]
 host = "localhost"
