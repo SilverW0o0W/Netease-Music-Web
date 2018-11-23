@@ -15,8 +15,8 @@ import tornado.template
 
 import redis
 from utils import get_real_id
-from song import Song
-from lyric import Exporter
+from rpc.song import Song
+from rpc.lyric import Exporter
 from dao.alchemy import DBWorker
 
 Reader = None

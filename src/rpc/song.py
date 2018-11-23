@@ -6,7 +6,7 @@ import json
 import time
 import dao.alchemy as alchemy
 
-from cloudmusic.spider.api import request_song
+from cloudmusic.spider.api import request_song, request_playlist
 from cloudmusic.spider.adapter import adapt_song
 
 
@@ -45,6 +45,9 @@ class Song(object):
             'name': name,
             'artists': artists,
         }
+
+    def get_playlist(self, playlist_id):
+        content = request_song(playlist_id)
 
     def get_file_name(self, song_id, name_format='0'):
         song = self.get_song(song_id)
