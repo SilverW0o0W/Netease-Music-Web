@@ -46,7 +46,7 @@ class Song(object):
             'artists': artists,
         }
 
-    def get_playlist(self, playlist_id):
+    def get_playlist(self, playlist_id, name_format=""):
         content = request_playlist(playlist_id)
         playlist = adapt_playlist(content, playlist_id)
 

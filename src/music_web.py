@@ -86,7 +86,7 @@ class SongLyric(WebBase):
             status, msg, path = Export.export_song(real_id, lrc_type=lrc_type)
             name = Reader.get_file_name(real_id, name_format=name_format)
         elif real_type == 1:
-            pass
+            Reader.get_playlist(real_id, name_format=name_format)
         resp = {
             "status": 0,
             "msg": msg,
