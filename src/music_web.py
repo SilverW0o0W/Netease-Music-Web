@@ -126,7 +126,6 @@ if __name__ == '__main__':
         [
             (r"/lyric", LyricHandler),
             (r"/lyric/song", SongLyric),
-
             (r"/", MainHandler),
             (r"/views/(.*)", tornado.web.StaticFileHandler, {"path": os.path.join(os.path.dirname(__file__), "views")}),
         ],
