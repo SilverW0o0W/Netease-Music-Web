@@ -47,6 +47,7 @@ class Song(object):
         }
 
     def get_playlist(self, playlist_id, name_format=""):
+        # Need refactor
         content = request_playlist(playlist_id)
         playlist = adapt_playlist(content, playlist_id)
 
