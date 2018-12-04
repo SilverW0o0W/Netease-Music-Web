@@ -44,6 +44,8 @@ class LyricHandler(WebBase):
 
 
 class SongLyric(WebBase):
+
+    # need async
     def get(self, *args, **kwargs):
         file_path = self.get_argument('uri', "")
         name = self.get_argument('name', "")
