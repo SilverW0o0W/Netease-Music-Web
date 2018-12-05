@@ -131,7 +131,7 @@ if __name__ == '__main__':
             (r"/", MainHandler),
             (r"/views/(.*)", tornado.web.StaticFileHandler, {"path": os.path.join(os.path.dirname(__file__), "views")}),
         ],
-        debug=True,
+        debug=False,
     )
 
     http_server = tornado.httpserver.HTTPServer(app, xheaders=True)
