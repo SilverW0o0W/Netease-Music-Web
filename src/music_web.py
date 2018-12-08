@@ -29,7 +29,7 @@ class WebBase(tornado.web.RequestHandler):
         if self.request.body:
             try:
                 self.body_params = json.loads(self.request.body)
-            except:
+            except Exception:
                 self.body_params = {}
 
 
