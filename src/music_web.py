@@ -5,6 +5,7 @@
 import os
 import sys
 import json
+import traceback
 
 import toml
 
@@ -43,24 +44,27 @@ class LyricHandler(WebBase):
         self.render("views/templates/lyric.html")
 
 
-class SongLyric(WebBase):
-
-    # need async
-    def get(self, *args, **kwargs):
-        file_path = self.get_argument('uri', "")
-        name = self.get_argument('name', "")
-        self.set_header('Content-Type', 'application/octet-stream')
-        self.set_header('Content-Disposition', 'attachment; filename=%s' % name + '.lrc')
-        path = Export.convert_cache_path(file_path)
-        with open(path, 'rb') as f:
-            while True:
-                data = f.read(1024)
-                if not data:
-                    break
-                self.write(data)
-        self.finish()
-
+class Song(WebBase):
     def post(self, *args, **kwargs):
+        resp = {
+            "status": -1,
+            "user_msg": ""
+        }
+        try:
+            params = self.body_params
+            status, msg, data = cReadService.read_song(params)
+            if status:
+                resp["status"] = 0
+                resp["data"] = data
+            else:
+                resp["msg"] = '数据统计出错'
+                resp["_msg"] = msg
+        except Exception:
+            resp["msg"] = '内部错误'
+            resp["_msg"] = traceback.format_exc()
+        resp.pop("_user_msg", "")
+        self.write(json.dumps(resp))
+
         url_type = self.body_params.get('url_type', '0')
         url = self.body_params.get('url', '0')
         name_format = self.body_params.get('format', '0')
@@ -127,11 +131,15 @@ if __name__ == '__main__':
     app = tornado.web.Application(
         [
             (r"/lyric", LyricHandler),
-            (r"/lyric/song", SongLyric),
+            (r"/song", Song),
+            (r"/playlist", Playlist),
+
+            (r"/lyric/song", LyricSong),
+            (r"/lyric/playlist", PlaylistSong),
+
             (r"/", MainHandler),
             (r"/views/(.*)", tornado.web.StaticFileHandler, {"path": os.path.join(os.path.dirname(__file__), "views")}),
         ],
-        debug=False,
     )
 
     http_server = tornado.httpserver.HTTPServer(app, xheaders=True)
