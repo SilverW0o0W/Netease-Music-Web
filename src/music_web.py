@@ -65,47 +65,6 @@ class Song(WebBase):
         resp.pop("_user_msg", "")
         self.write(json.dumps(resp))
 
-        url_type = self.body_params.get('url_type', '0')
-        url = self.body_params.get('url', '0')
-        name_format = self.body_params.get('format', '0')
-        if not url:
-            resp = {
-                "status": -1,
-                "msg": "请输入链接"
-            }
-            self.write(json.dumps(resp))
-            return
-
-        real_id, real_type = get_real_id(url, url_type)
-        if not real_id or real_type not in [0, 1, 2]:
-            resp = {
-                "status": -1,
-                "msg": "请输入合法链接"
-            }
-            self.write(json.dumps(resp))
-            return
-
-        lrc_type = int(self.body_params.get('type', 0))
-        status, msg, path = '', '', ''
-        name = ''
-        if real_type == 0:
-            status, msg, path = Export.export_song(real_id, lrc_type=lrc_type)
-            name = Reader.get_file_name(real_id, name_format=name_format)
-        elif real_type == 1:
-            Reader.get_playlist(real_id, name_format=name_format)
-        resp = {
-            "status": 0,
-            "msg": msg,
-            "data": [
-                {
-                    "name": name,
-                    "status": "有效" if status else "无效",
-                    "uri": "/lyric/song?uri={}&name={}".format(path, name),
-                },
-            ]
-        }
-        self.write(json.dumps(resp))
-
 
 def create_path(paths):
     for path in paths:
