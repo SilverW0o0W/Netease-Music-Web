@@ -14,8 +14,6 @@ import tornado.web
 import tornado.httpserver
 import tornado.template
 
-import redis
-from utils import get_real_id
 from rpc.song import Song
 from rpc.lyric import Exporter
 from dao.alchemy import DBWorker
@@ -44,7 +42,7 @@ class LyricHandler(WebBase):
         self.render("views/templates/lyric.html")
 
 
-class Song(WebBase):
+class SongHandler(WebBase):
     def post(self, *args, **kwargs):
         resp = {
             "status": -1,
@@ -52,7 +50,7 @@ class Song(WebBase):
         }
         try:
             params = self.body_params
-            status, msg, data = cReadService.read_song(params)
+            status, msg, data = readService.read_song(params)
             if status:
                 resp["status"] = 0
                 resp["data"] = data
@@ -90,7 +88,7 @@ if __name__ == '__main__':
     app = tornado.web.Application(
         [
             (r"/lyric", LyricHandler),
-            (r"/song", Song),
+            (r"/song", SongHandler),
             (r"/playlist", Playlist),
 
             (r"/lyric/song", LyricSong),
