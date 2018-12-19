@@ -3,3 +3,4 @@ toml
 redis
 sqlalchemy
 cloudmusic
+pymysql

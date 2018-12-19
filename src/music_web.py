@@ -5,6 +5,7 @@
 import os
 import sys
 import json
+import traceback
 
 import toml
 
@@ -13,10 +14,8 @@ import tornado.web
 import tornado.httpserver
 import tornado.template
 
-import redis
-from utils import get_real_id
-from song import Song
-from lyric import Exporter
+from rpc.song import Song
+from rpc.lyric import Exporter
 from dao.alchemy import DBWorker
 
 Reader = None
@@ -29,7 +28,7 @@ class WebBase(tornado.web.RequestHandler):
         if self.request.body:
             try:
                 self.body_params = json.loads(self.request.body)
-            except:
+            except Exception:
                 self.body_params = {}
 
 
@@ -43,61 +42,25 @@ class LyricHandler(WebBase):
         self.render("views/templates/lyric.html")
 
 
-class SongLyric(WebBase):
-    def get(self, *args, **kwargs):
-        file_path = self.get_argument('uri', "")
-        name = self.get_argument('name', "")
-        self.set_header('Content-Type', 'application/octet-stream')
-        self.set_header('Content-Disposition', 'attachment; filename=%s' % name + '.lrc')
-        path = Export.convert_cache_path(file_path)
-        with open(path, 'rb') as f:
-            while True:
-                data = f.read(1024)
-                if not data:
-                    break
-                self.write(data)
-        self.finish()
-
+class SongHandler(WebBase):
     def post(self, *args, **kwargs):
-        url_type = self.body_params.get('url_type', '0')
-        url = self.body_params.get('url', '0')
-        name_format = self.body_params.get('format', '0')
-        if not url:
-            resp = {
-                "status": -1,
-                "msg": "请输入链接"
-            }
-            self.write(json.dumps(resp))
-            return
-
-        real_id, real_type = get_real_id(url, url_type)
-        if not real_id or real_type not in [0, 1, 2]:
-            resp = {
-                "status": -1,
-                "msg": "请输入合法链接"
-            }
-            self.write(json.dumps(resp))
-            return
-
-        lrc_type = int(self.body_params.get('type', 0))
-        status, msg, path = '', '', ''
-        name = ''
-        if real_type == 0:
-            status, msg, path = Export.export_song(real_id, lrc_type=lrc_type)
-            name = Reader.get_file_name(real_id, name_format=name_format)
-        elif real_type == 1:
-            pass
         resp = {
-            "status": 0,
-            "msg": msg,
-            "data": [
-                {
-                    "name": name,
-                    "status": "有效" if status else "无效",
-                    "uri": "/lyric/song?uri={}&name={}".format(path, name),
-                },
-            ]
+            "status": -1,
+            "user_msg": ""
         }
+        try:
+            params = self.body_params
+            status, msg, data = readService.read_song(params)
+            if status:
+                resp["status"] = 0
+                resp["data"] = data
+            else:
+                resp["msg"] = '数据统计出错'
+                resp["_msg"] = msg
+        except Exception:
+            resp["msg"] = '内部错误'
+            resp["_msg"] = traceback.format_exc()
+        resp.pop("_user_msg", "")
         self.write(json.dumps(resp))
 
 
@@ -125,12 +88,15 @@ if __name__ == '__main__':
     app = tornado.web.Application(
         [
             (r"/lyric", LyricHandler),
-            (r"/lyric/song", SongLyric),
+            (r"/song", SongHandler),
+            (r"/playlist", Playlist),
+
+            (r"/lyric/song", LyricSong),
+            (r"/lyric/playlist", PlaylistSong),
 
             (r"/", MainHandler),
             (r"/views/(.*)", tornado.web.StaticFileHandler, {"path": os.path.join(os.path.dirname(__file__), "views")}),
         ],
-        debug=True,
     )
 
     http_server = tornado.httpserver.HTTPServer(app, xheaders=True)
