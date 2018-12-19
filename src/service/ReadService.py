@@ -15,18 +15,35 @@ class ReadService(ServiceBase):
 
     def read_song(self, params):
         song_id = params.get("song_id", None)
-        if not song_id:
-            url = params.get("url", "")
-            song_id = utils.match_song(url)
+        url = params.get("url", "")
+        format = params.get("format", 0)
+        song_id = utils.match_song(url) if not song_id else song_id
         if not song_id:
             return False, "", {}
+        self.get_song()
 
-        lrc_type = int(self.body_params.get('type', 0))
-        name = ''
-        if real_type == 0:
-            status, msg, path = Export.export_song(real_id, lrc_type=lrc_type)
-            name = Reader.get_file_name(real_id, name_format=name_format)
-        elif real_type == 1:
-            Reader.get_playlist(real_id, name_format=name_format)
-
-    def get_db_song(self,song_id):
+    def get_song(self, song_id):
+        db_song = self.song_db.query_song(song_id)
+        if db_song:
+            name = db_song.name
+            artists = db_song.artists
+        else:
+            content = request_song(song_id)
+            song = adapt_song(content, song_id)
+            now = int(time.time())
+            name = song.name
+            artists_list = [artist.name for artist in song.artists]
+            artists = ','.join(artists_list)
+            db_song = alchemy.Song(
+                origin_id=song_id,
+                name=song.name,
+                artists=artists,
+                created_time=now,
+                updated_time=now
+            )
+            self.song_db.merge_song(db_song)
+        return {
+            'id': song_id,
+            'name': name,
+            'artists': artists,
+        }
