@@ -89,7 +89,7 @@ if __name__ == '__main__':
         [
             (r"/lyric", LyricHandler),
             (r"/song", SongHandler),
-            (r"/playlist", Playlist),
+            (r"/playlist", PlaylistHandler),
 
             (r"/lyric/song", LyricSong),
             (r"/lyric/playlist", PlaylistSong),
