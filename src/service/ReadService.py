@@ -9,6 +9,8 @@ import time
 from service import ServiceBase
 
 from cloudmusic.spider import utils
+from cloudmusic.spider.api import request_song, request_playlist
+from cloudmusic.spider.adapter import adapt_song, adapt_playlist
 
 
 class ReadService(ServiceBase):
@@ -16,11 +18,10 @@ class ReadService(ServiceBase):
     def read_song(self, params):
         song_id = params.get("song_id", None)
         url = params.get("url", "")
-        format = params.get("format", 0)
         song_id = utils.match_song(url) if not song_id else song_id
         if not song_id:
             return False, "", {}
-        self.get_song()
+        self.get_song(song_id)
 
     def get_song(self, song_id):
         db_song = self.song_db.query_song(song_id)
@@ -30,7 +31,6 @@ class ReadService(ServiceBase):
         else:
             content = request_song(song_id)
             song = adapt_song(content, song_id)
-            now = int(time.time())
             name = song.name
             artists_list = [artist.name for artist in song.artists]
             artists = ','.join(artists_list)
@@ -38,8 +38,6 @@ class ReadService(ServiceBase):
                 origin_id=song_id,
                 name=song.name,
                 artists=artists,
-                created_time=now,
-                updated_time=now
             )
             self.song_db.merge_song(db_song)
         return {
