@@ -6,6 +6,7 @@ import os
 import sys
 import json
 import traceback
+import copy
 
 import toml
 import redis
@@ -25,46 +26,53 @@ Export = None
 gReadService = None
 
 
-class WebBase(tornado.web.RequestHandler):
-    def prepare(self):
-        self.body_params = {}
-        if self.request.body:
-            try:
-                self.body_params = json.loads(self.request.body)
-            except Exception:
-                self.body_params = {}
+class HandlerBase(tornado.web.RequestHandler):
+    pass
 
 
-class MainHandler(WebBase):
-    def get(self):
-        self.render("views/templates/main.html")
+class ViewBase(HandlerBase):
+    def view_base(self, relative_url):
+        self.render(relative_url)
 
 
-class LyricHandler(WebBase):
-    def get(self):
-        self.render("views/templates/lyric.html")
+class RPCBase(HandlerBase):
 
-
-class SongHandler(WebBase):
-    def post(self, *args, **kwargs):
+    def post_base(self, func, error_msg="内部错误"):
         resp = {
             "status": -1,
             "user_msg": ""
         }
+        _params = None
         try:
-            params = self.body_params
-            status, msg, data = gReadService.read_song(params)
-            if status:
-                resp["status"] = 0
+            _params = json.loads(self.request.body)
+            params = copy.deepcopy(_params)
+            status, msg, data = func(params)
+            if status == 0:
                 resp["data"] = data
             else:
-                resp["msg"] = '数据统计出错'
-                resp["_msg"] = msg
+                resp["user_msg"] = msg
+                resp["_user_msg"] = msg
+            resp["status"] = status
         except Exception:
-            resp["msg"] = '内部错误'
-            resp["_msg"] = traceback.format_exc()
+            resp["user_msg"] = error_msg
+            resp["_user_msg"] = traceback.format_exc()
         resp.pop("_user_msg", "")
         self.write(json.dumps(resp))
+
+
+class MainHandler(ViewBase):
+    def get(self):
+        self.view_base("views/templates/main.html")
+
+
+class Lyric(ViewBase):
+    def get(self):
+        self.view_base("views/templates/lyric.html")
+
+
+class Song(RPCBase):
+    def post(self, *args, **kwargs):
+        self.post_base(gReadService.read_song, error_msg="错误")
 
 
 def create_path(paths):
@@ -91,8 +99,8 @@ if __name__ == '__main__':
 
     app = tornado.web.Application(
         [
-            (r"/lyric", LyricHandler),
-            (r"/song", SongHandler),
+            (r"/lyric", Lyric),
+            (r"/song", Song),
             # (r"/playlist", PlaylistHandler),
 
             # (r"/lyric/song", LyricSong),
