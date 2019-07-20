@@ -6,7 +6,7 @@ import sys
 sys.path.append("../")
 
 import time
-from service import ServiceBase
+from rpc.ServiceBase import ServiceBase
 
 from cloudmusic.spider import utils
 from cloudmusic.spider.api import request_song, request_playlist

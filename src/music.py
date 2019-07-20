@@ -8,6 +8,7 @@ import json
 import traceback
 
 import toml
+import redis
 
 import tornado.ioloop
 import tornado.web
@@ -16,10 +17,12 @@ import tornado.template
 
 from rpc.song import Song
 from rpc.lyric import Exporter
+from rpc.ReadService import ReadService
 from dao.alchemy import DBWorker
 
 Reader = None
 Export = None
+gReadService = None
 
 
 class WebBase(tornado.web.RequestHandler):
@@ -50,7 +53,7 @@ class SongHandler(WebBase):
         }
         try:
             params = self.body_params
-            status, msg, data = readService.read_song(params)
+            status, msg, data = gReadService.read_song(params)
             if status:
                 resp["status"] = 0
                 resp["data"] = data
@@ -84,15 +87,16 @@ if __name__ == '__main__':
     Reader = Song(song_db)
     Export = Exporter(lyric_cache, Config["DOWNLOAD_DIR"], Config["CACHE_DIR"])
     create_path([Config["DOWNLOAD_DIR"], Config["CACHE_DIR"]])
+    gReadService = ReadService(song_db, Config)
 
     app = tornado.web.Application(
         [
             (r"/lyric", LyricHandler),
             (r"/song", SongHandler),
-            (r"/playlist", PlaylistHandler),
+            # (r"/playlist", PlaylistHandler),
 
-            (r"/lyric/song", LyricSong),
-            (r"/lyric/playlist", PlaylistSong),
+            # (r"/lyric/song", LyricSong),
+            # (r"/lyric/playlist", PlaylistSong),
 
             (r"/", MainHandler),
             (r"/views/(.*)", tornado.web.StaticFileHandler, {"path": os.path.join(os.path.dirname(__file__), "views")}),
