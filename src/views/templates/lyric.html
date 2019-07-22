@@ -56,9 +56,9 @@
 
 {% include "./import_js.html"%}
 <style>
-  .el-select .el-input {
-    width: 130px;
-  }
+    .el-select .el-input {
+        width: 130px;
+    }
 </style>
 <script>
     var Main = {
@@ -69,9 +69,8 @@
                     url_type: "0",
                     format: "0",
                     type: "0",
-                    },
-                gridData: [
-                ],
+                },
+                gridData: [],
                 dialogTableVisible: false,
             }
         },
@@ -79,18 +78,18 @@
             download() {
                 let that = this;
                 axios.post('/lyric/song', this.form)
-                .then(function (response) {
-                    if (response.data.status == 0) {
-                        that.gridData = response.data.data;
-                        that.dialogTableVisible = true;
-                    } else {
-                        that.$message.error(response.data.msg);
-                    }
-                })
-                .catch(function (error) {
-                    console.log(error);
-                });
-            },
+                    .then(function (response) {
+                        if (response.data.status == 0) {
+                            that.gridData = response.data.data;
+                            that.dialogTableVisible = true;
+                        } else {
+                            that.$message.error(response.data.msg);
+                        }
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    });
+            }
         }
     };
     var Prods = Vue.extend(Main)

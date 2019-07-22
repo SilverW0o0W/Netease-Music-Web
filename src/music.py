@@ -70,9 +70,9 @@ class Lyric(ViewBase):
         self.view_base("views/templates/lyric.html")
 
 
-class Song(RPCBase):
+class SongDetail(RPCBase):
     def post(self, *args, **kwargs):
-        self.post_base(gReadService.read_song, error_msg="错误")
+        self.post_base(gReadService.read_song, error_msg="内部错误")
 
 
 def create_path(paths):
@@ -92,7 +92,6 @@ if __name__ == '__main__':
         Config = toml.load(f)
     lyric_cache = redis.StrictRedis(**Config["LYRIC_CACHE"])
     song_db = DBWorker(Config["CONNECT_STRING"])
-    Reader = Song(song_db)
     Export = Exporter(lyric_cache, Config["DOWNLOAD_DIR"], Config["CACHE_DIR"])
     create_path([Config["DOWNLOAD_DIR"], Config["CACHE_DIR"]])
     gReadService = ReadService(song_db, Config)
@@ -100,7 +99,7 @@ if __name__ == '__main__':
     app = tornado.web.Application(
         [
             (r"/lyric", Lyric),
-            (r"/song", Song),
+            (r"/song/detail", SongDetail),
             # (r"/playlist", PlaylistHandler),
 
             # (r"/lyric/song", LyricSong),
