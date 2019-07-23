@@ -35,7 +35,7 @@ class ViewBase(HandlerBase):
         self.render(relative_url)
 
 
-class RPCBase(HandlerBase):
+class APIBase(HandlerBase):
 
     def post_base(self, func, error_msg="内部错误"):
         resp = {
@@ -70,9 +70,14 @@ class Lyric(ViewBase):
         self.view_base("views/templates/lyric.html")
 
 
-class SongDetail(RPCBase):
+class APISong(APIBase):
     def post(self, *args, **kwargs):
         self.post_base(gReadService.read_song, error_msg="内部错误")
+
+
+class APILyric(APIBase):
+    def post(self, *args, **kwargs):
+        self.post_base(gReadService.read_lyric, error_msg="内部错误")
 
 
 def create_path(paths):
@@ -99,11 +104,11 @@ if __name__ == '__main__':
     app = tornado.web.Application(
         [
             (r"/lyric", Lyric),
-            (r"/song/detail", SongDetail),
-            # (r"/playlist", PlaylistHandler),
 
-            # (r"/lyric/song", LyricSong),
-            # (r"/lyric/playlist", PlaylistSong),
+            (r"/api/song", APISong),
+            # (r"/api/playlist/detail", PlaylistDetail),
+
+            (r"/api/lyric", APILyric),
 
             (r"/", MainHandler),
             (r"/views/(.*)", tornado.web.StaticFileHandler, {"path": os.path.join(os.path.dirname(__file__), "views")}),

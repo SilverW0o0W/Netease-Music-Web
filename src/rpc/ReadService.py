@@ -39,3 +39,19 @@ class ReadService(ServiceBase):
             ]
         }
         return 0, "", data
+
+    def read_lyric(self, params):
+        song_id = params.get("song_id", None)
+        url = params.get("url", "")
+        song_id = music_utils.match_song(url) if not song_id else song_id
+        if not song_id:
+            return False, "", {}
+        status, lyric = NEUtils.get_lyric(song_id)
+        if not status or not lyric:
+            return -2, "", {}
+        data = {
+            "id": song_id,
+            "lyric": lyric.get("lyric", ""),
+            "translated_lyric": lyric.get("trans_lyric", "")
+        }
+        return 0, "", data
