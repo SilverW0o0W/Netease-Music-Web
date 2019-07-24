@@ -16,7 +16,6 @@ import tornado.web
 import tornado.httpserver
 import tornado.template
 
-from rpc.song import Song
 from rpc.lyric import Exporter
 from rpc.ReadService import ReadService
 from dao.alchemy import DBWorker
@@ -60,6 +59,26 @@ class APIBase(HandlerBase):
         self.write(json.dumps(resp))
 
 
+class FileBase(HandlerBase):
+    def get_base(self, file_name, value, func=None):
+        self.set_header('Content-Type', 'application/octet-stream')
+        self.set_header('Content-Disposition', 'attachment; filename=%s' % file_name)
+        func = func or self.write_from_str
+        func(value)
+        self.finish()
+
+    def write_from_file(self, path):
+        with open(path, 'rb') as f:
+            while True:
+                data = f.read(1024)
+                if not data:
+                    break
+                self.write(data)
+
+    def write_from_str(self, value):
+        self.write(value)
+
+
 class MainHandler(ViewBase):
     def get(self):
         self.view_base("views/templates/main.html")
@@ -78,6 +97,12 @@ class APISong(APIBase):
 class APILyric(APIBase):
     def post(self, *args, **kwargs):
         self.post_base(gReadService.read_lyric, error_msg="内部错误")
+
+
+class FileLyric(FileBase):
+    def get(self, *args, **kwargs):
+        gReadService.read_lyric_file()
+        self.get_base(file_name, value)
 
 
 def create_path(paths):
@@ -109,6 +134,8 @@ if __name__ == '__main__':
             # (r"/api/playlist/detail", PlaylistDetail),
 
             (r"/api/lyric", APILyric),
+
+            (r"/file/lyric", FileLyric),
 
             (r"/", MainHandler),
             (r"/views/(.*)", tornado.web.StaticFileHandler, {"path": os.path.join(os.path.dirname(__file__), "views")}),
