@@ -118,13 +118,15 @@ class ReadService(ServiceBase):
         try:
             schema.download_lyric_schema(params)
         except MultipleInvalid as e:
-            return -2, "参数错误", ""
+            return 400, "参数错误", ""
         song_id = int(params["id"])
         lrc_format = int(params["format"])
         lrc_type = int(params["type"])
         lyric = LyricUtils.get_lyric(song_id)
+        if not lyric:
+            return 404, "资源不存在", ""
 
-        name = lyric.get("name", "")
+        name = lyric["name"]
         artists = self.get_str_artists(lyric, lrc_format)
 
         file_name = self.name_format_map[lrc_format].format(
@@ -132,7 +134,7 @@ class ReadService(ServiceBase):
         )
         data = {
             "name": file_name + ".lrc",
-            "lyric": lyric.get("lyric", {}).get("lyric", ""),
+            "lyric": self.get_lyric_content(lyric, lrc_type),
         }
 
         return 200, "", data
@@ -143,3 +145,15 @@ class ReadService(ServiceBase):
             return ""
         else:
             return ','.join(map(lambda artist: artist["name"], data["artists"]))
+
+    @classmethod
+    def get_lyric_content(cls, data, lrc_type):
+        lyric = data.get("lyric", {})
+        if not lyric:
+            return ""
+        content_fields = cls.lyric_type_map[lrc_type]
+        for field in content_fields:
+            content = lyric.get(field, "")
+            if content:
+                return content
+        return ""

@@ -15,5 +15,11 @@ class ServiceBase(object):
         2: '{name} - {artists}',
     }
 
+    lyric_type_map = {
+        0: ("lyric",),
+        1: ("translated_lyric", "lyric"),
+        2: ("lyric",),
+    }
+
     def __init__(self, dao, conf):
         self.dao = dao
