@@ -22,28 +22,35 @@
                         </el-select>
                     </el-input>
                 </el-form-item>
-                <el-form-item label="命名格式">
-                    <el-radio v-model="form.format" label="0">歌曲名</el-radio>
-                    <el-radio v-model="form.format" label="1">歌手 - 歌曲名</el-radio>
-                    <el-radio v-model="form.format" label="2">歌曲名 - 歌手</el-radio>
-                </el-form-item>
-                <el-form-item label="语言版本">
-                    <el-radio v-model="form.type" label="0">原歌词</el-radio>
-                    <el-radio v-model="form.type" label="1">翻译歌词</el-radio>
-                    <el-radio v-model="form.type" label="2">混合歌词</el-radio>
+                <el-form-item label="高级">
+                    <el-collapse>
+                        <el-collapse-item title="歌词导出设置">
+                            <el-form-item label="命名格式">
+                                <el-radio v-model="lrc_format" label="0">歌曲名</el-radio>
+                                <el-radio v-model="lrc_format" label="1">歌手 - 歌曲名</el-radio>
+                                <el-radio v-model="lrc_format" label="2">歌曲名 - 歌手</el-radio>
+                            </el-form-item>
+                            <el-form-item label="语言版本">
+                                <el-radio v-model="lrc_type" label="0">原歌词</el-radio>
+                                <el-radio v-model="lrc_type" label="1">翻译歌词</el-radio>
+                                <el-radio v-model="lrc_type" label="2">混合歌词</el-radio>
+                            </el-form-item>
+                        </el-collapse-item>
+                    </el-collapse>
                 </el-form-item>
                 <el-form-item>
-                    <el-button type="primary" @click="download()">Download</el-button>
+                    <el-button type="primary" @click="loadLyric()">Load</el-button>
                 </el-form-item>
             </el-form>
             <el-dialog title="歌曲信息" :visible.sync="dialogTableVisible">
                 <el-table :data="gridData">
-                    <el-table-column label="歌曲名" prop="name" width="300" show-overflow-tooltip="true"></el-table-column>
-                    <el-table-column label="状态" prop="status" width="150"></el-table-column>
-                    <el-table-column label="操作" prop="uri">
+                    <el-table-column label="歌曲名" prop="name" width="300"
+                                     :show-overflow-tooltip="true">
+                    </el-table-column>
+                    <el-table-column label="操作" prop="lyric.download">
                         <template slot-scope="scope">
-                            <el-button size="mini" type="primary">
-                                <a :href="scope.row.uri" target="_blank"><i class="el-icon-download"></i></a>
+                            <el-button size="mini" type="primary" @click="downloadLyric(scope.row.lyric.download)"
+                                       :disabled="!scope.row.lyric.available" icon="el-icon-download">
                             </el-button>
                         </template>
                         </template>
@@ -56,9 +63,9 @@
 
 {% include "./import_js.html"%}
 <style>
-  .el-select .el-input {
-    width: 130px;
-  }
+    .el-select .el-input {
+        width: 130px;
+    }
 </style>
 <script>
     var Main = {
@@ -66,34 +73,39 @@
             return {
                 form: {
                     url: "",
-                    url_type: "0",
-                    format: "0",
-                    type: "0",
-                    },
-                gridData: [
-                ],
-                dialogTableVisible: false,
+                    url_type: "0"
+                },
+                lrc_format: "0",
+                lrc_type: "0",
+                gridData: [],
+                dialogTableVisible: false
             }
         },
         methods: {
-            download() {
+            loadLyric() {
                 let that = this;
-                axios.post('/lyric/song', this.form)
-                .then(function (response) {
-                    if (response.data.status == 0) {
-                        that.gridData = response.data.data;
-                        that.dialogTableVisible = true;
-                    } else {
-                        that.$message.error(response.data.msg);
-                    }
-                })
-                .catch(function (error) {
-                    console.log(error);
-                });
+                axios.post('/api/song/lyric', this.form)
+                    .then(function (response) {
+                        if (response.data.status === 0) {
+                            that.gridData = [];
+                            that.gridData.push(response.data.data);
+                            that.dialogTableVisible = true;
+                        } else {
+                            that.$message.error(response.data.msg);
+                        }
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    });
             },
+            downloadLyric(url) {
+                let that = this;
+                var lyric_url = url + "&format=" + that.lrc_format + "&type=" + that.lrc_type;
+                window.open(lyric_url);
+            }
         }
     };
-    var Prods = Vue.extend(Main)
+    var Prods = Vue.extend(Main);
     new Prods().$mount('#app')
 </script>
 </body>

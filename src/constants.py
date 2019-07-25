@@ -3,5 +3,5 @@
 
 import const
 
-const.DOWNLOAD_PATH = ''
-const.URL_PATH = ''
+const.LYRIC_KEY = "lyric_{}"
+const.CACHE_TTL = 7200

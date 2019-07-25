@@ -6,11 +6,20 @@ import sys
 sys.path.append("../")
 
 import time
+import json
+
+from voluptuous import MultipleInvalid
+
+from cloudmusic.spider import utils as music_utils
+
+import g
+from constants import const
+
+from rpc import schema
 from rpc.ServiceBase import ServiceBase
 
-from cloudmusic.spider import utils
-from cloudmusic.spider.api import request_song, request_playlist
-from cloudmusic.spider.adapter import adapt_song, adapt_playlist
+from utils import NEUtils
+from utils import LyricUtils
 
 
 class ReadService(ServiceBase):
@@ -18,30 +27,119 @@ class ReadService(ServiceBase):
     def read_song(self, params):
         song_id = params.get("song_id", None)
         url = params.get("url", "")
-        song_id = utils.match_song(url) if not song_id else song_id
+        song_id = music_utils.match_song(url) if not song_id else song_id
         if not song_id:
-            return False, "", {}
-        self.get_song(song_id)
-
-    def get_song(self, song_id):
-        db_song = self.song_db.query_song(song_id)
-        if db_song:
-            name = db_song.name
-            artists = db_song.artists
-        else:
-            content = request_song(song_id)
-            song = adapt_song(content, song_id)
-            name = song.name
-            artists_list = [artist.name for artist in song.artists]
-            artists = ','.join(artists_list)
-            db_song = alchemy.Song(
-                origin_id=song_id,
-                name=song.name,
-                artists=artists,
-            )
-            self.song_db.merge_song(db_song)
-        return {
-            'id': song_id,
-            'name': name,
-            'artists': artists,
+            return -2, "参数错误", {}
+        song = NEUtils.get_song(song_id)
+        if not song:
+            return -3, "获取失败", {}
+        data = {
+            "id": int(song.song_id),
+            "name": song.name,
+            "album": {
+                "id": int(song.album.album_id),
+                "name": song.album.name,
+            },
+            "artists": [
+                {
+                    "id": int(artist.artist_id),
+                    "name": artist.name,
+                }
+                for artist in song.artists
+            ]
         }
+        return 0, "", data
+
+    def read_lyric(self, params):
+        song_id = params.get("song_id", None)
+        url = params.get("url", "")
+        song_id = music_utils.match_song(url) if not song_id else song_id
+        if not song_id:
+            return -2, "参数错误", {}
+        status, lyric = NEUtils.get_lyric(song_id)
+        if not status or not lyric:
+            return -3, "", {}
+        data = {
+            "id": song_id,
+            "lyric": lyric.get("lyric", ""),
+            "translated_lyric": lyric.get("trans_lyric", "")
+        }
+        return 0, "", data
+
+    def read_song_lyric(self, params):
+        song_id = params.get("song_id", None)
+        url = params.get("url", "")
+        song_id = music_utils.match_song(url) if not song_id else song_id
+        if not song_id:
+            return -1, "", {}
+
+        lyric = LyricUtils.get_lyric(song_id)
+        if lyric:
+            self.fill_lyric_data(lyric)
+            return 0, "", lyric
+        song = NEUtils.get_song(song_id)
+        if not song:
+            return -2, "获取歌曲信息失败", {}
+        status, lyric = NEUtils.get_lyric(song_id)
+        available = True if lyric else False
+
+        data = {
+            "id": song_id,
+            "name": song.name,
+            "album": {
+                "id": int(song.album.album_id),
+                "name": song.album.name,
+            },
+            "artists": [
+                {
+                    "id": int(artist.artist_id),
+                    "name": artist.name,
+                }
+                for artist in song.artists
+            ],
+            "lyric": {
+                "available": available,
+                "lyric": lyric.get("lyric", ""),
+                "translated_lyric": lyric.get("trans_lyric", ""),
+            },
+        }
+
+        key = const.LYRIC_KEY.format(song_id)
+        g.MusicCache.setex(key, const.CACHE_TTL, json.dumps(data))
+        self.fill_lyric_data(data)
+
+        return 0, "", data
+
+    @staticmethod
+    def fill_lyric_data(lyric):
+        lyric["lyric"]["download"] = "file/lyric?id={}".format(lyric["id"])
+
+    def download_lyric(self, params):
+        try:
+            schema.download_lyric_schema(params)
+        except MultipleInvalid as e:
+            return -2, "参数错误", ""
+        song_id = int(params["id"])
+        lrc_format = int(params["format"])
+        lrc_type = int(params["type"])
+        lyric = LyricUtils.get_lyric(song_id)
+
+        name = lyric.get("name", "")
+        artists = self.get_str_artists(lyric, lrc_format)
+
+        file_name = self.name_format_map[lrc_format].format(
+            name=name, artists=artists
+        )
+        data = {
+            "name": file_name + ".lrc",
+            "lyric": lyric.get("lyric", {}).get("lyric", ""),
+        }
+
+        return 200, "", data
+
+    @staticmethod
+    def get_str_artists(data, lrc_format):
+        if lrc_format == 0:
+            return ""
+        else:
+            return ','.join(map(lambda artist: artist["name"], data["artists"]))
