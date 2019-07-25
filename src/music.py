@@ -66,7 +66,7 @@ class FileBase(HandlerBase):
             self.finish()
             return
         self.set_header('Content-Type', 'application/octet-stream')
-        self.set_header('Content-Disposition', 'attachment; filename=%s' % file_name)
+        self.set_header('Content-Disposition', "attachment; filename=\"{}\"".format(file_name))
         func = func or self.write_from_str
         func(value)
         self.finish()

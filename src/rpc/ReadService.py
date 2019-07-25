@@ -123,9 +123,23 @@ class ReadService(ServiceBase):
         lrc_format = int(params["format"])
         lrc_type = int(params["type"])
         lyric = LyricUtils.get_lyric(song_id)
+
         name = lyric.get("name", "")
+        artists = self.get_str_artists(lyric, lrc_format)
+
+        file_name = self.name_format_map[lrc_format].format(
+            name=name, artists=artists
+        )
         data = {
-            "name": "{}.lrc".format(name) if name else "",
+            "name": file_name + ".lrc",
             "lyric": lyric.get("lyric", {}).get("lyric", ""),
         }
+
         return 200, "", data
+
+    @staticmethod
+    def get_str_artists(data, lrc_format):
+        if lrc_format == 0:
+            return ""
+        else:
+            return ','.join(map(lambda artist: artist["name"], data["artists"]))
