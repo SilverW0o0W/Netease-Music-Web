@@ -58,7 +58,7 @@ class APIBase(HandlerBase):
 class FileBase(HandlerBase):
     def get_base(self, file_name, value, func=None):
         if not value:
-            self.write_error(400)
+            self.set_status(400)
             self.finish()
             return
         self.set_header('Content-Type', 'application/octet-stream')
@@ -108,7 +108,7 @@ class FileLyric(FileBase):
     def get(self, *args, **kwargs):
         song_id = self.get_argument("id", default="")
         if not song_id:
-            self.write_error(404)
+            self.set_status(404)
             self.finish()
             return
         file_name, value = gReadService.download_lyric(int(song_id))

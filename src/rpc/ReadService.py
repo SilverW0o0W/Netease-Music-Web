@@ -70,11 +70,13 @@ class ReadService(ServiceBase):
 
         lyric = LyricUtils.get_lyric(song_id)
         if lyric:
+            self.fill_lyric_data(lyric)
             return 0, "", lyric
         song = NEUtils.get_song(song_id)
         if not song:
             return -2, "获取歌曲信息失败", {}
         status, lyric = NEUtils.get_lyric(song_id)
+        available = True if lyric else False
 
         data = {
             "id": song_id,
@@ -91,18 +93,24 @@ class ReadService(ServiceBase):
                 for artist in song.artists
             ],
             "lyric": {
-                "available": True if lyric else False,
+                "available": available,
                 "lyric": lyric.get("lyric", ""),
                 "translated_lyric": lyric.get("trans_lyric", ""),
-                "download": "file/lyric?id={}".format(song_id),
             },
         }
 
         key = const.LYRIC_KEY.format(song_id)
         g.MusicCache.setex(key, const.CACHE_TTL, json.dumps(data))
+        self.fill_lyric_data(data)
 
         return 0, "", data
 
+    @staticmethod
+    def fill_lyric_data(lyric):
+        lyric["lyric"]["download"] = "file/lyric?id={}".format(lyric["id"])
+
     def download_lyric(self, song_id):
         lyric = LyricUtils.get_lyric(song_id)
-        return "test.lrc", lyric.get("lyric", {}).get("lyric", "")
+        name = lyric.get("name", "")
+        file_name = "{}.lrc".format(name) if name else ""
+        return file_name, lyric.get("lyric", {}).get("lyric", "")

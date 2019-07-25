@@ -33,17 +33,18 @@
                     <el-radio v-model="form.type" label="2">混合歌词</el-radio>
                 </el-form-item>
                 <el-form-item>
-                    <el-button type="primary" @click="download()">Download</el-button>
+                    <el-button type="primary" @click="loadLyric()">Load</el-button>
                 </el-form-item>
             </el-form>
             <el-dialog title="歌曲信息" :visible.sync="dialogTableVisible">
                 <el-table :data="gridData">
-                    <el-table-column label="歌曲名" prop="name" width="300" show-overflow-tooltip="true"></el-table-column>
-                    <el-table-column label="状态" prop="lyric.available" width="150"></el-table-column>
+                    <el-table-column label="歌曲名" prop="name" width="300"
+                                     :show-overflow-tooltip="true">
+                    </el-table-column>
                     <el-table-column label="操作" prop="lyric.download">
                         <template slot-scope="scope">
-                            <el-button size="mini" type="primary">
-                                <a :href="scope.row.lyric.download" target="_blank"><i class="el-icon-download"></i></a>
+                            <el-button size="mini" type="primary" @click="downloadLyric(scope.row.lyric.download)"
+                                       :disabled="!scope.row.lyric.available" icon="el-icon-download">
                             </el-button>
                         </template>
                         </template>
@@ -75,7 +76,7 @@
             }
         },
         methods: {
-            download() {
+            loadLyric() {
                 let that = this;
                 axios.post('/api/song/lyric', this.form)
                     .then(function (response) {
@@ -90,6 +91,9 @@
                     .catch(function (error) {
                         console.log(error);
                     });
+            },
+            downloadLyric(url) {
+                window.open(url);
             }
         }
     };
