@@ -8,11 +8,16 @@ sys.path.append("../")
 import time
 import json
 
-import g
-from constants import const
-from rpc.ServiceBase import ServiceBase
+from voluptuous import MultipleInvalid
 
 from cloudmusic.spider import utils as music_utils
+
+import g
+from constants import const
+
+from rpc import schema
+from rpc.ServiceBase import ServiceBase
+
 from utils import NEUtils
 from utils import LyricUtils
 
@@ -109,8 +114,18 @@ class ReadService(ServiceBase):
     def fill_lyric_data(lyric):
         lyric["lyric"]["download"] = "file/lyric?id={}".format(lyric["id"])
 
-    def download_lyric(self, song_id):
+    def download_lyric(self, params):
+        try:
+            schema.download_lyric_schema(params)
+        except MultipleInvalid as e:
+            return -2, "参数错误", ""
+        song_id = int(params["id"])
+        lrc_format = int(params["format"])
+        lrc_type = int(params["type"])
         lyric = LyricUtils.get_lyric(song_id)
         name = lyric.get("name", "")
-        file_name = "{}.lrc".format(name) if name else ""
-        return file_name, lyric.get("lyric", {}).get("lyric", "")
+        data = {
+            "name": "{}.lrc".format(name) if name else "",
+            "lyric": lyric.get("lyric", {}).get("lyric", ""),
+        }
+        return 200, "", data

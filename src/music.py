@@ -56,7 +56,11 @@ class APIBase(HandlerBase):
 
 
 class FileBase(HandlerBase):
-    def get_base(self, file_name, value, func=None):
+    def download_base(self, status, file_name, value, func=None):
+        if status != 200:
+            self.set_status(status)
+            self.finish()
+            return
         if not value:
             self.set_status(400)
             self.finish()
@@ -106,13 +110,13 @@ class APISongLyric(APIBase):
 
 class FileLyric(FileBase):
     def get(self, *args, **kwargs):
-        song_id = self.get_argument("id", default="")
-        if not song_id:
-            self.set_status(404)
-            self.finish()
-            return
-        file_name, value = gReadService.download_lyric(int(song_id))
-        self.get_base(file_name, value)
+        params = {
+            "id": self.get_argument("id"),
+            "format": self.get_argument("format"),
+            "type": self.get_argument("type"),
+        }
+        status, msg, data = gReadService.download_lyric(params)
+        self.download_base(status, data["name"], data["lyric"])
 
 
 if __name__ == '__main__':

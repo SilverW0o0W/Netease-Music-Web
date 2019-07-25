@@ -26,14 +26,14 @@
                     <el-collapse>
                         <el-collapse-item title="歌词导出设置">
                             <el-form-item label="命名格式">
-                                <el-radio v-model="form.format" label="0">歌曲名</el-radio>
-                                <el-radio v-model="form.format" label="1">歌手 - 歌曲名</el-radio>
-                                <el-radio v-model="form.format" label="2">歌曲名 - 歌手</el-radio>
+                                <el-radio v-model="lrc_format" label="0">歌曲名</el-radio>
+                                <el-radio v-model="lrc_format" label="1">歌手 - 歌曲名</el-radio>
+                                <el-radio v-model="lrc_format" label="2">歌曲名 - 歌手</el-radio>
                             </el-form-item>
                             <el-form-item label="语言版本">
-                                <el-radio v-model="form.type" label="0">原歌词</el-radio>
-                                <el-radio v-model="form.type" label="1">翻译歌词</el-radio>
-                                <el-radio v-model="form.type" label="2">混合歌词</el-radio>
+                                <el-radio v-model="lrc_type" label="0">原歌词</el-radio>
+                                <el-radio v-model="lrc_type" label="1">翻译歌词</el-radio>
+                                <el-radio v-model="lrc_type" label="2">混合歌词</el-radio>
                             </el-form-item>
                         </el-collapse-item>
                     </el-collapse>
@@ -73,10 +73,10 @@
             return {
                 form: {
                     url: "",
-                    url_type: "0",
-                    format: "0",
-                    type: "0"
+                    url_type: "0"
                 },
+                lrc_format: "0",
+                lrc_type: "0",
                 gridData: [],
                 dialogTableVisible: false
             }
@@ -99,7 +99,9 @@
                     });
             },
             downloadLyric(url) {
-                window.open(url);
+                let that = this;
+                var lyric_url = url + "&format=" + that.lrc_format + "&type=" + that.lrc_type;
+                window.open(lyric_url);
             }
         }
     };
