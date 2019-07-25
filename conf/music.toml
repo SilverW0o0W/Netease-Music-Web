@@ -1,8 +1,5 @@
-DOWNLOAD_DIR = "/data/lyric/download"
-CACHE_DIR = "/data/lyric/cache"
-CONNECT_STRING = "sqlite:///music.db"
-
-[LYRIC_CACHE]
-host = "localhost"
+[MUSIC_CACHE]
+host = "127.0.0.1"
 port = 6379
 db = 0
+decode_responses = true

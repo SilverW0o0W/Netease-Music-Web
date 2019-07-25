@@ -9,19 +9,15 @@ import traceback
 import copy
 
 import toml
-import redis
+import g
 
 import tornado.ioloop
 import tornado.web
 import tornado.httpserver
 import tornado.template
 
-from rpc.lyric import Exporter
 from rpc.ReadService import ReadService
-from dao.alchemy import DBWorker
 
-Reader = None
-Export = None
 gReadService = None
 
 
@@ -61,6 +57,10 @@ class APIBase(HandlerBase):
 
 class FileBase(HandlerBase):
     def get_base(self, file_name, value, func=None):
+        if not value:
+            self.write_error(400)
+            self.finish()
+            return
         self.set_header('Content-Type', 'application/octet-stream')
         self.set_header('Content-Disposition', 'attachment; filename=%s' % file_name)
         func = func or self.write_from_str
@@ -99,16 +99,20 @@ class APILyric(APIBase):
         self.post_base(gReadService.read_lyric, error_msg="内部错误")
 
 
+class APISongLyric(APIBase):
+    def post(self, *args, **kwargs):
+        self.post_base(gReadService.read_song_lyric, error_msg="内部错误")
+
+
 class FileLyric(FileBase):
     def get(self, *args, **kwargs):
-        gReadService.read_lyric_file()
+        song_id = self.get_argument("id", default="")
+        if not song_id:
+            self.write_error(404)
+            self.finish()
+            return
+        file_name, value = gReadService.download_lyric(int(song_id))
         self.get_base(file_name, value)
-
-
-def create_path(paths):
-    for path in paths:
-        if not os.path.isdir(path):
-            os.makedirs(path)
 
 
 if __name__ == '__main__':
@@ -120,11 +124,8 @@ if __name__ == '__main__':
         exit(1)
     with open(sys.argv[2], "r") as f:
         Config = toml.load(f)
-    lyric_cache = redis.StrictRedis(**Config["LYRIC_CACHE"])
-    song_db = DBWorker(Config["CONNECT_STRING"])
-    Export = Exporter(lyric_cache, Config["DOWNLOAD_DIR"], Config["CACHE_DIR"])
-    create_path([Config["DOWNLOAD_DIR"], Config["CACHE_DIR"]])
-    gReadService = ReadService(song_db, Config)
+    g.init(Config)
+    gReadService = ReadService(None, Config)
 
     app = tornado.web.Application(
         [
@@ -134,6 +135,7 @@ if __name__ == '__main__':
             # (r"/api/playlist/detail", PlaylistDetail),
 
             (r"/api/lyric", APILyric),
+            (r"/api/song/lyric", APISongLyric),
 
             (r"/file/lyric", FileLyric),
 
