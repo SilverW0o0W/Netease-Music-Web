@@ -88,7 +88,7 @@ class MainHandler(ViewBase):
         self.view_base("views/templates/main.html")
 
 
-class Lyric(ViewBase):
+class ViewLyric(ViewBase):
     def get(self):
         self.view_base("views/templates/lyric.html")
 
@@ -133,7 +133,7 @@ if __name__ == '__main__':
 
     app = tornado.web.Application(
         [
-            (r"/lyric", Lyric),
+            (r"/lyric", ViewLyric),
 
             (r"/api/song", APISong),
             # (r"/api/playlist/detail", PlaylistDetail),
