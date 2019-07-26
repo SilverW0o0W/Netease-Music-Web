@@ -7,6 +7,7 @@ import sys
 import json
 import traceback
 import copy
+from urllib import parse
 
 import toml
 import g
@@ -65,8 +66,8 @@ class FileBase(HandlerBase):
             self.set_status(400)
             self.finish()
             return
-        self.set_header('Content-Type', 'application/octet-stream')
-        self.set_header('Content-Disposition', "attachment; filename=\"{}\"".format(file_name))
+        self.set_header('Content-Type', 'application/octet-stream;')
+        self.set_header('Content-Disposition', "attachment; filename*=UTF-8''{}".format(parse.quote(file_name)))
         func = func or self.write_from_str
         func(value)
         self.finish()
