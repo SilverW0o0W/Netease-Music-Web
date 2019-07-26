@@ -151,9 +151,18 @@ class ReadService(ServiceBase):
         lyric = data.get("lyric", {})
         if not lyric:
             return ""
-        content_fields = cls.lyric_type_map[lrc_type]
-        for field in content_fields:
-            content = lyric.get(field, "")
-            if content:
-                return content
+        if lrc_type == 2:
+            lyric_content = lyric.get("lyric", "")
+            tlyric_content = lyric.get("translated_lyric", "")
+            if lyric_content and tlyric_content:
+                return LyricUtils.merge_lyric(lyric_content, tlyric_content)
+            lrc_type = 1
+
+        if lrc_type in {0, 1}:
+            content_fields = cls.lyric_type_map[lrc_type]
+            for field in content_fields:
+                content = lyric.get(field, "")
+                if content:
+                    return content
+
         return ""
