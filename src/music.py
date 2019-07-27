@@ -99,6 +99,11 @@ class APISong(APIBase):
         self.post_base(gReadService.read_song, error_msg="内部错误")
 
 
+class APIPlaylist(APIBase):
+    def post(self, *args, **kwargs):
+        self.post_base(gReadService.read_playlist, error_msg="内部错误")
+
+
 class APILyric(APIBase):
     def post(self, *args, **kwargs):
         self.post_base(gReadService.read_lyric, error_msg="内部错误")
@@ -137,7 +142,7 @@ if __name__ == '__main__':
             (r"/lyric", ViewLyric),
 
             (r"/api/song", APISong),
-            # (r"/api/playlist/detail", PlaylistDetail),
+            (r"/api/playlist", APIPlaylist),
 
             (r"/api/lyric", APILyric),
             (r"/api/song/lyric", APISongLyric),

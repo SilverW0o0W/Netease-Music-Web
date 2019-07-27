@@ -166,3 +166,6 @@ class ReadService(ServiceBase):
                     return content
 
         return ""
+
+    def read_playlist(self, params):
+        pass
