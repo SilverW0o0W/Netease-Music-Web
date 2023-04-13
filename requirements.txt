@@ -1,5 +1,5 @@
-tornado
-toml
-redis
-cloudmusic
-voluptuous
+tornado==6.2
+toml==0.10.2
+redis==4.5.4
+cloudmusic==0.1.1
+voluptuous==0.13.1

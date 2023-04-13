@@ -1,5 +1,5 @@
 # Pull base image.
-FROM python:
+FROM python:3.7.16
 
 #工作目录
 WORKDIR /data/Netease-Music-Web
