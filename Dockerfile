@@ -10,4 +10,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD [ "python", "src/music_web.py", "8090", "conf/music.toml" ]
+CMD [ "python", "src/music.py", "8090", "conf/music.toml" ]
