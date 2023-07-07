@@ -1,4 +1,4 @@
-tornado==6.2
+tornado==6.3.2
 toml==0.10.2
 redis==4.5.4
 cloudmusic==0.1.1
