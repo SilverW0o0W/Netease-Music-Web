@@ -5,12 +5,10 @@ import sys
 
 sys.path.append("../")
 
-import time
 import json
 
 from voluptuous import MultipleInvalid
-
-from cloudmusic.spider import utils as music_utils
+from cloudmusic import utils as music_utils
 
 import g
 from constants import const

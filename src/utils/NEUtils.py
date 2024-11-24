@@ -1,8 +1,8 @@
 #!/usr/bin/env python3.6
 # -*- encoding: utf-8 -*-
 
-from cloudmusic.spider import api as music_api
-from cloudmusic.spider import adapter as music_adapter
+from cloudmusic import api as music_api
+from cloudmusic import adapter as music_adapter
 
 
 def get_lyric(song_id):
@@ -25,7 +25,15 @@ def adapt_lyric(lyric_data):
     return either_exist, lyric
 
 
+def get_songs(song_ids):
+    contents = music_api.request_songs(song_ids)
+    songs = {
+        str(song_id): music_adapter.adapt_song(content, song_id)
+        for song_id, content in contents.items()
+    }
+    return songs
+
+
 def get_song(song_id):
-    content = music_api.request_song(song_id)
-    song = music_adapter.adapt_song(content, song_id)
-    return song
+    songs = get_songs([song_id, ])
+    return songs.get(song_id, None)

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3.6
 # -*- encoding: utf-8 -*-
 
-from cloudmusic.spider.utils import match_song
-from cloudmusic.spider.utils import match_playlist
-from cloudmusic.spider.utils import match_album
+from cloudmusic.utils import match_song
+from cloudmusic.utils import match_playlist
+from cloudmusic.utils import match_album
 
 SONG = 0
 PLAYLIST = 1
