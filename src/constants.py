@@ -3,5 +3,6 @@
 
 import const
 
-const.LYRIC_KEY = "lyric_{}"
+const.KEY_SONG = "music:song:{song_id}"
+const.KEY_LYRIC = "music:lyric:{song_id}"
 const.CACHE_TTL = 7200

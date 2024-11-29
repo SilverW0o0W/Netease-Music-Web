@@ -10,11 +10,10 @@ import json
 from voluptuous import MultipleInvalid
 from cloudmusic import utils as music_utils
 
-import g
-from constants import const
-
 from rpc import schema
 from rpc.ServiceBase import ServiceBase
+
+from dao.redis_cache import get_lyric_cache, set_lyric_cache, get_song_cache, set_song_cache
 
 from utils import NEUtils
 from utils import LyricUtils
@@ -28,25 +27,10 @@ class ReadService(ServiceBase):
         song_id = music_utils.match_song(url) if not song_id else song_id
         if not song_id:
             return -2, "参数错误", {}
-        song = NEUtils.get_song(song_id)
+        song = self.get_and_update_song(song_id)
         if not song:
             return -3, "获取失败", {}
-        data = {
-            "id": int(song.song_id),
-            "name": song.name,
-            "album": {
-                "id": int(song.album.album_id),
-                "name": song.album.name,
-            },
-            "artists": [
-                {
-                    "id": int(artist.artist_id),
-                    "name": artist.name,
-                }
-                for artist in song.artists
-            ]
-        }
-        return 0, "", data
+        return 0, "", song
 
     def read_lyric(self, params):
         song_id = params.get("song_id", None)
@@ -54,82 +38,100 @@ class ReadService(ServiceBase):
         song_id = music_utils.match_song(url) if not song_id else song_id
         if not song_id:
             return -2, "参数错误", {}
-        status, lyric = NEUtils.get_lyric(song_id)
-        if not status or not lyric:
-            return -3, "", {}
-        data = {
-            "id": song_id,
-            "lyric": lyric.get("lyric", ""),
-            "translated_lyric": lyric.get("trans_lyric", "")
-        }
-        return 0, "", data
+
+        lyric = self.get_and_update_lyric(song_id)
+        if not lyric:
+            return -3, "获取失败", {}
+        return 0, "", lyric
 
     def read_song_lyric(self, params):
         song_id = params.get("song_id", None)
         url = params.get("url", "")
         song_id = music_utils.match_song(url) if not song_id else song_id
         if not song_id:
-            return -1, "", {}
+            return -1, "id匹配失败", {}
 
-        lyric = LyricUtils.get_lyric(song_id)
-        if lyric:
-            self.fill_lyric_data(lyric)
-            return 0, "", lyric
-        song = NEUtils.get_song(song_id)
+        song = self.get_and_update_song(song_id)
         if not song:
-            return -2, "获取歌曲信息失败", {}
-        status, lyric = NEUtils.get_lyric(song_id)
-        available = True if lyric else False
-
+            return -2, "获取失败", {}
+        lyric = self.get_and_update_lyric(song_id)
+        song["lyric"] = {
+            "available": lyric["available"] if lyric else True,
+            "download": self.get_lyric_download_url(song_id),
+        }
         data = {
-            "id": song_id,
-            "name": song.name,
+            "songs": [song, ]
+        }
+        return 0, "", data
+
+    @staticmethod
+    def get_lyric_download_url(song_id):
+        return "file/lyric?id={}".format(song_id)
+
+    @classmethod
+    def get_and_update_song(cls, song_id):
+        song = get_song_cache(song_id)
+        if song:
+            return song
+        _song = NEUtils.get_song(song_id)
+        song = {
+            "id": int(_song.song_id),
+            "name": _song.name,
             "album": {
-                "id": int(song.album.album_id),
-                "name": song.album.name,
+                "id": int(_song.album.album_id),
+                "name": _song.album.name,
             },
             "artists": [
                 {
                     "id": int(artist.artist_id),
                     "name": artist.name,
                 }
-                for artist in song.artists
-            ],
-            "lyric": {
-                "available": available,
-                "lyric": lyric.get("lyric", ""),
-                "translated_lyric": lyric.get("trans_lyric", ""),
-            },
+                for artist in _song.artists
+            ]
         }
+        set_song_cache(song_id, song)
+        return song
 
-        key = const.LYRIC_KEY.format(song_id)
-        g.MusicCache.setex(key, const.CACHE_TTL, json.dumps(data))
-        self.fill_lyric_data(data)
-
-        return 0, "", data
-
-    @staticmethod
-    def fill_lyric_data(lyric):
-        lyric["lyric"]["download"] = "file/lyric?id={}".format(lyric["id"])
+    @classmethod
+    def get_and_update_lyric(cls, song_id):
+        lyric = get_lyric_cache(song_id)
+        if lyric:
+            return lyric
+        status, _lyric = NEUtils.get_lyric(song_id)
+        if not status:
+            return {}
+        available = True if _lyric else False
+        lyric = {
+            "available": available,
+            "lyric": "",
+            "translated_lyric": "",
+        }
+        if available:
+            lyric["lyric"] = _lyric.get("lyric", "")
+            lyric["translated_lyric"] = _lyric.get("trans_lyric", "")
+        set_lyric_cache(song_id, lyric)
+        return lyric
 
     def download_lyric(self, params):
         try:
             schema.download_lyric_schema(params)
         except MultipleInvalid as e:
-            return 400, "参数错误", ""
+            return 400, "参数错误", {}
+        data = {}
         song_id = int(params["id"])
         lrc_format = int(params["format"])
         lrc_type = int(params["type"])
-        lyric = LyricUtils.get_lyric(song_id)
-        if not lyric:
-            return 404, "资源不存在", ""
+        song = self.get_and_update_song(song_id)
+        if not song:
+            return 404, "资源不存在", data
 
-        name = lyric["name"]
-        artists = self.get_str_artists(lyric, lrc_format)
+        name = song["name"]
+        artists = self.get_str_artists(song, lrc_format)
 
         file_name = self.name_format_map[lrc_format].format(
             name=name, artists=artists
         )
+        lyric = self.get_and_update_lyric(song_id)
         data = {
             "name": file_name + ".lrc",
             "lyric": self.get_lyric_content(lyric, lrc_type),
@@ -145,8 +147,7 @@ class ReadService(ServiceBase):
             return ','.join(map(lambda artist: artist["name"], data["artists"]))
 
     @classmethod
-    def get_lyric_content(cls, data, lrc_type):
-        lyric = data.get("lyric", {})
+    def get_lyric_content(cls, lyric, lrc_type):
         if not lyric:
             return ""
         if lrc_type == 2:

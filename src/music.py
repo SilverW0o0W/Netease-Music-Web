@@ -52,6 +52,7 @@ class APIBase(HandlerBase):
         except Exception:
             resp["user_msg"] = error_msg
             resp["_user_msg"] = traceback.format_exc()
+            print(resp["_user_msg"])
         resp.pop("_user_msg", "")
         self.write(json.dumps(resp))
 
@@ -117,7 +118,7 @@ class FileLyric(FileBase):
             "type": self.get_argument("type"),
         }
         status, msg, data = gReadService.download_lyric(params)
-        self.download_base(status, data["name"], data["lyric"])
+        self.download_base(status, data.get("name"), data.get("lyric"))
 
 
 if __name__ == '__main__':
