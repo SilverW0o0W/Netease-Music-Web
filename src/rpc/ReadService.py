@@ -3,6 +3,9 @@
 
 import sys
 
+from constants import NAME_FORMAT_TYPE_MAP, EXPORT_LYRIC_TYPE_ORIGIN, EXPORT_LYRIC_TYPE_TRANSLATED, \
+    EXPORT_LYRIC_TYPE_MIX
+
 sys.path.append("../")
 
 import json
@@ -128,7 +131,7 @@ class ReadService(ServiceBase):
         name = song["name"]
         artists = self.get_str_artists(song, lrc_format)
 
-        file_name = self.name_format_map[lrc_format].format(
+        file_name = NAME_FORMAT_TYPE_MAP[lrc_format].format(
             name=name, artists=artists
         )
         lyric = self.get_and_update_lyric(song_id)
@@ -150,14 +153,13 @@ class ReadService(ServiceBase):
     def get_lyric_content(cls, lyric, lrc_type):
         if not lyric:
             return ""
-        if lrc_type == 2:
+        if lrc_type == EXPORT_LYRIC_TYPE_MIX:
             lyric_content = lyric.get("lyric", "")
             tlyric_content = lyric.get("translated_lyric", "")
             if lyric_content and tlyric_content:
                 return LyricUtils.merge_lyric(lyric_content, tlyric_content)
-            lrc_type = 1
 
-        if lrc_type in {0, 1}:
+        if lrc_type in {EXPORT_LYRIC_TYPE_ORIGIN, EXPORT_LYRIC_TYPE_TRANSLATED, EXPORT_LYRIC_TYPE_MIX}:
             content_fields = cls.lyric_type_map[lrc_type]
             for field in content_fields:
                 content = lyric.get(field, "")

@@ -8,7 +8,7 @@
 
 import g
 import json
-from constants import const
+from constants import KEY_SONG, TTL_MUSIC, KEY_LYRIC
 from utils import BaseUtils
 
 
@@ -22,26 +22,26 @@ def get_json_cache(redis_obj, key):
     return json_obj
 
 
-def set_json_cache(redis_obj, key, lyric):
-    value = json.dumps(lyric)
-    redis_obj.set(key, value, ex=const.CACHE_TTL)
+def set_json_cache(redis_obj, key, json_obj, ex=None):
+    value = json.dumps(json_obj)
+    redis_obj.set(key, value, ex=ex)
 
 
 def get_song_cache(song_id):
-    key = const.KEY_SONG.format(song_id=song_id)
+    key = KEY_SONG.format(song_id=song_id)
     return get_json_cache(g.MusicCache, key)
 
 
 def set_song_cache(song_id, song):
-    key = const.KEY_SONG.format(song_id=song_id)
-    set_json_cache(g.MusicCache, key, song)
+    key = KEY_SONG.format(song_id=song_id)
+    set_json_cache(g.MusicCache, key, song, ex=TTL_MUSIC)
 
 
 def get_lyric_cache(song_id):
-    key = const.KEY_LYRIC.format(song_id=song_id)
+    key = KEY_LYRIC.format(song_id=song_id)
     return get_json_cache(g.MusicCache, key)
 
 
 def set_lyric_cache(song_id, lyric):
-    key = const.KEY_LYRIC.format(song_id=song_id)
-    set_json_cache(g.MusicCache, key, lyric)
+    key = KEY_LYRIC.format(song_id=song_id)
+    set_json_cache(g.MusicCache, key, lyric, ex=TTL_MUSIC)

@@ -3,22 +3,16 @@
 
 import sys
 
-sys.path.append("../")
+from constants import EXPORT_LYRIC_TYPE_ORIGIN, EXPORT_LYRIC_TYPE_TRANSLATED, EXPORT_LYRIC_TYPE_MIX
 
-from constants import const
+sys.path.append("../")
 
 
 class ServiceBase(object):
-    name_format_map = {
-        0: '{name}',
-        1: '{artists} - {name}',
-        2: '{name} - {artists}',
-    }
-
     lyric_type_map = {
-        0: ("lyric",),
-        1: ("translated_lyric", "lyric"),
-        2: ("lyric",),
+        EXPORT_LYRIC_TYPE_ORIGIN: ("lyric",),
+        EXPORT_LYRIC_TYPE_TRANSLATED: ("translated_lyric", "lyric",),
+        EXPORT_LYRIC_TYPE_MIX: ("lyric", "translated_lyric",),
     }
 
     def __init__(self, dao, conf):

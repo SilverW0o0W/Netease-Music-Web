@@ -1,8 +1,20 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 
-import const
+KEY_SONG = "music:song:{song_id}"
+KEY_LYRIC = "music:lyric:{song_id}"
+TTL_MUSIC = 7200
 
-const.KEY_SONG = "music:song:{song_id}"
-const.KEY_LYRIC = "music:lyric:{song_id}"
-const.CACHE_TTL = 7200
+NAME_FORMAT_TYPE_NAME = 0
+NAME_FORMAT_TYPE_ARTISTS_NAME = 1
+NAME_FORMAT_TYPE_NAME_ARTISTS = 2
+
+NAME_FORMAT_TYPE_MAP = {
+    NAME_FORMAT_TYPE_NAME: '{name}',
+    NAME_FORMAT_TYPE_ARTISTS_NAME: '{artists} - {name}',
+    NAME_FORMAT_TYPE_NAME_ARTISTS: '{name} - {artists}',
+}
+
+EXPORT_LYRIC_TYPE_ORIGIN = 0
+EXPORT_LYRIC_TYPE_TRANSLATED = 1
+EXPORT_LYRIC_TYPE_MIX = 2
